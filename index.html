@@ -154,7 +154,6 @@
 </div>
 
 <script>
-    // --- 多言語設定 ---
     const i18n = {
         ja: {
             promote: "成る", dontPromote: "成らず", undo: "1手消す", reset: "初期化",
@@ -184,7 +183,6 @@
     }
     function toggleLang() { currentLang = currentLang === 'ja' ? 'en' : 'ja'; localStorage.setItem('SHOGI_LANG', currentLang); updateUIStrings(); render(); }
 
-    // --- データと定数 ---
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
     const kanjiMap = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'全','+n':'圭','+l':'杏'};
     const kifPieceMap = {'歩':'p','飛':'r','角':'b','金':'g','銀':'s','桂':'n','香':'l','玉':'k','王':'k','と':'+p','竜':'+r','龍':'+r','馬':'+b','成銀':'+s','成桂':'+n','成香':'+l','全':'+s','圭':'+n','杏':'+l'};
@@ -205,20 +203,16 @@
         return [{ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: i18n[currentLang].startPos, turn: 0, lastPos: null, kifMove: "" }]; 
     }
 
-    // --- メインロジック ---
     function render() {
         const data = history[currentIndex];
         const boardEl = document.getElementById('board'); boardEl.innerHTML = '';
-        
         document.getElementById('senteKomadaiContainer').className = "komadai sente" + (data.turn===0 ? " active-sente" : "");
         document.getElementById('goteKomadaiContainer').className = "komadai gote" + (data.turn===1 ? " active-gote" : "");
-
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 const cell = document.createElement('div'); cell.className = 'cell';
                 if (selected?.type === 'board' && selected.r === r && selected.c === c) cell.classList.add('selected');
                 if (data.lastPos && data.lastPos.r === r && data.lastPos.c === c) cell.classList.add('last-move');
-                
                 const p = data.board[r][c];
                 if (p) {
                     const span = document.createElement('span');
@@ -309,33 +303,27 @@
         const nb = JSON.parse(JSON.stringify(d.board));
         const sm = [...d.senteMoti], gm = [...d.goteMoti];
         const isSente = d.turn === 0;
-
         if (isDrop) {
             nb[tr][tc] = isSente ? p.toLowerCase() : p.toUpperCase();
             (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p.toLowerCase()), 1);
         } else {
-            if (nb[tr][tc]) {
-                const cap = nb[tr][tc].replace('+', '').toLowerCase();
-                (isSente ? sm : gm).push(cap);
-            }
+            if (nb[tr][tc]) { const cap = nb[tr][tc].replace('+', '').toLowerCase(); (isSente ? sm : gm).push(cap); }
             const finalP = isPromote ? "+" + p : p;
             nb[tr][tc] = isSente ? finalP : finalP.toUpperCase();
             nb[fr][fc] = '';
         }
-
         const zenkakuNum = ["１","２","３","４","５","６","７","８","９"];
         const moveTxt = (isSente?"▲":"△") + kanjiMap[p] + (isPromote?"成":"") + (isDrop?"打":"") + `(${9-tc}${tr+1})`;
-        // --- 修正箇所：Unicode計算をやめ、配列から文字を取得 ---
         const kifM = `${zenkakuNum[8-tc]}${["一","二","三","四","五","六","七","八","九"][tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
-
         history = history.slice(0, currentIndex + 1);
         history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveTxt, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
         currentIndex++; render();
     }
 
-    // --- インポート / エクスポート ---
+    // --- インポート修正：読み込んだら自動保存 ---
     function importKIF(e) {
         const f = e.target.files[0]; if (!f) return;
+        const kName = f.name.replace(/\.kif$/i, '');
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
@@ -344,26 +332,16 @@
                 lines.forEach(line => {
                     const m = line.match(/^\s*(\d+)\s+([１-９一-九同].+?)(?:\s|\(|$)/);
                     if (!m) return;
-                    let moveStr = m[2];
-                    let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成');
-                    
-                    if (moveStr.startsWith('同')) {
-                        tr = history[currentIndex].lastPos.r; tc = history[currentIndex].lastPos.c;
-                    } else {
-                        tc = 9 - ("１２３４５６７８９".indexOf(moveStr[0]) + 1);
-                        tr = "一二三四五六七八九".indexOf(moveStr[1]);
-                    }
-
+                    let moveStr = m[2]; let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成');
+                    if (moveStr.startsWith('同')) { tr = history[currentIndex].lastPos.r; tc = history[currentIndex].lastPos.c; }
+                    else { tc = 9 - ("１２３４５６７８９".indexOf(moveStr[0]) + 1); tr = "一二三四五六七八九".indexOf(moveStr[1]); }
                     const pChar = moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0];
                     pCode = kifPieceMap[pChar].replace('+', '');
-
-                    if (moveStr.includes('打')) {
-                        executeMove(null, null, tr, tc, pCode, false, true);
-                    } else {
+                    if (moveStr.includes('打')) { executeMove(null, null, tr, tc, pCode, false, true); }
+                    else {
                         const fm = line.match(/\((\d)(\d)\)/);
-                        if (fm) {
-                            fc = 9 - parseInt(fm[1]); fr = parseInt(fm[2]) - 1;
-                        } else {
+                        if (fm) { fc = 9 - parseInt(fm[1]); fr = parseInt(fm[2]) - 1; }
+                        else {
                             const d = history[currentIndex];
                             outer: for(let r=0; r<9; r++) for(let c=0; c<9; c++){
                                 let p = d.board[r][c];
@@ -377,21 +355,30 @@
                         executeMove(fr, fc, tr, tc, pCode, isProm, false);
                     }
                 });
-                render();
+                // 自動保存とリスト更新
+                const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+                d[kName] = history;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+                document.getElementById('kifuName').value = kName;
+                updateList();
+                document.getElementById('kifuList').value = kName;
+                jumpTo(history.length - 1);
             } catch (err) { alert(i18n[currentLang].msgKifError); }
         };
         reader.readAsText(f); e.target.value = "";
     }
 
     function exportKIF() {
+        const kifuName = document.getElementById('kifuName').value || 'kifu';
         let kif = `手合割：平手\n手数----指手----\n`;
         history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'})); a.download = 'kifu.kif'; a.click();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'}));
+        a.download = `${kifuName}.kif`; a.click();
     }
 
     function exportAllJSON() {
-        const d = localStorage.getItem(STORAGE_KEY);
-        if(!d || d === "{}") return alert(i18n[currentLang].msgNoData);
+        const d = localStorage.getItem(STORAGE_KEY); if(!d || d === "{}") return alert(i18n[currentLang].msgNoData);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([d], {type:'application/json'})); a.download = 'shogi_backup.json'; a.click();
     }
 
@@ -409,7 +396,6 @@
         r.readAsText(f); e.target.value = "";
     }
 
-    // --- UI Helpers ---
     function updateHistoryUI() { 
         const h = document.getElementById('history');
         h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i}. ${x.moveText}</div>`).join('');
@@ -420,7 +406,6 @@
     function nextMove() { if(currentIndex < history.length-1) jumpTo(currentIndex+1); }
     function undoLastMove() { if(history.length>1){ history.pop(); currentIndex = history.length-1; render(); } }
     function resetBoard() { if(confirm(i18n[currentLang].msgReset)){ history=getCleanHistory(); currentIndex=0; render(); } }
-    
     function saveKifu() {
         const n = document.getElementById('kifuName').value; if(!n) return;
         const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[n] = history;
@@ -432,13 +417,12 @@
     }
     function loadKifu() {
         const n = document.getElementById('kifuList').value;
-        if(n){ history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = 0; render(); }
+        if(n){ history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = history.length - 1; document.getElementById('kifuName').value = n; render(); }
     }
     function deleteKifu() {
         const n = document.getElementById('kifuList').value;
         if(n && confirm("Delete?")){ const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); delete d[n]; localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); }
     }
-
     window.onload = () => { history = getCleanHistory(); updateUIStrings(); render(); updateList(); };
 </script>
 </body>
