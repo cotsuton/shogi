@@ -20,7 +20,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>本格将棋盤 - 着手強調版</title>
+    <title>本格将棋盤 - 着手先強調版</title>
     <style>
         :root {
             --board-bg: #dab982; 
@@ -28,7 +28,7 @@
             --sente-color: #1a1a1a; 
             --nari-color: #8b0000; 
             --highlight-bg: rgba(211, 84, 0, 0.3);
-            --last-move-bg: rgba(255, 255, 0, 0.25); /* 最後に動かしたマスの色 */
+            --last-move-bg: rgba(255, 255, 0, 0.3); /* 着手先のハイライト色 */
             --move-dot: rgba(0, 0, 0, 0.2);
             --text-main: #3e2723;
             --ui-bg: #e0d7d2;
@@ -70,9 +70,8 @@
         #board { display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); background: var(--board-bg); border: 1px solid var(--cell-border); }
         .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; }
         
-        /* 選択中と着手強調のスタイル */
         .cell.selected { background: var(--highlight-bg); }
-        .cell.last-move { background: var(--last-move-bg); box-shadow: inset 0 0 8px rgba(255,165,0,0.5); }
+        .cell.last-move { background: var(--last-move-bg); box-shadow: inset 0 0 5px rgba(255,165,0,0.4); }
         
         .cell.can-move::after { content: ""; width: 14px; height: 14px; background-color: var(--move-dot); border-radius: 50%; position: absolute; }
         .piece { font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color); }
@@ -162,12 +161,7 @@
     const STORAGE_KEY = 'SHOGI_LS_DATA_V2';
 
     const initBoard = [['L','N','S','G','K','G','S','N','L'],['','R','','','','','','B',''],['P','P','P','P','P','P','P','P','P'],['','','','','','','','',''],['','','','','','','','',''],['','','','','','','','',''],['p','p','p','p','p','p','p','p','p'],['','b','','','','','','r',''],['l','n','s','g','k','g','s','n','l']];
-    // 初期状態には lastMove (着手情報) を null で入れる
-    history.push({ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: "開始局面", turn: 0, lastMove: null });
-
-    document.getElementById('kifuList').addEventListener('change', function() {
-        if (this.value) document.getElementById('kifuName').value = this.value;
-    });
+    history.push({ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: "開始局面", turn: 0, lastPos: null });
 
     function render() {
         const data = history[currentIndex]; if (!data) return;
@@ -180,14 +174,11 @@
                 const cell = document.createElement('div'); cell.className = 'cell';
                 const p = data.board[r][c];
                 
-                // 選択中のハイライト
                 if (selected?.type === 'board' && selected.fr === r && selected.fc === c) cell.classList.add('selected');
                 
-                // 最後に動かした駒のハイライト (移動元と移動先)
-                if (data.lastMove) {
-                    if ((data.lastMove.fr === r && data.lastMove.fc === c) || (data.lastMove.tr === r && data.lastMove.tc === c)) {
-                        cell.classList.add('last-move');
-                    }
+                // 動いた先の位置（lastPos）だけをハイライト
+                if (data.lastPos && data.lastPos.r === r && data.lastPos.c === c) {
+                    cell.classList.add('last-move');
                 }
 
                 if (selected?.type === 'board' && isValidMove(selected.fr, selected.fc, r, c, data.board[selected.fr][selected.fc], data.board)) cell.classList.add('can-move');
@@ -226,10 +217,6 @@
         });
     }
 
-    function jumpTo(index) { currentIndex = Math.max(0, Math.min(index, history.length - 1)); selected = null; render(); }
-    function prevMove() { jumpTo(currentIndex - 1); }
-    function nextMove() { jumpTo(currentIndex + 1); }
-    
     function handleCellClick(r, c) {
         const data = history[currentIndex];
         if (currentIndex < history.length - 1 && !selected) { history = history.slice(0, currentIndex + 1); }
@@ -286,7 +273,7 @@
             board:nb, senteMoti:sm, goteMoti:gm, 
             moveText:(d.turn==0?"▲":"△")+kanjiMap[f.toLowerCase()]+(n?"成":"")+`(${9-fc}${fr+1}→${9-tc}${tr+1})`, 
             turn:1-d.turn,
-            lastMove: {fr, fc, tr, tc} // 移動元・先を記録
+            lastPos: { r: tr, c: tc } // 動いた先のみ記録
         });
         currentIndex++; render();
     }
@@ -299,18 +286,20 @@
             board:nb, senteMoti:sm, goteMoti:gm, 
             moveText:(d.turn==0?"▲":"△")+kanjiMap[p.toLowerCase()]+`打(${9-c}${r+1})`, 
             turn:1-d.turn,
-            lastMove: {fr: null, fc: null, tr: r, tc: c} // 打った場合は元位置なし
+            lastPos: { r: r, c: c } // 打った先のみ記録
         });
         currentIndex++; render();
     }
 
+    // 他の共通関数 (保存、リスト更新、ジャンプ等) は変更なし
+    function jumpTo(index) { currentIndex = Math.max(0, Math.min(index, history.length - 1)); selected = null; render(); }
+    function prevMove() { jumpTo(currentIndex - 1); }
+    function nextMove() { jumpTo(currentIndex + 1); }
     function updateHistoryUI() { const h = document.getElementById('history'); h.innerHTML = history.map((x,i) => `<div class="history-item ${i==currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i}. ${x.moveText}</div>`).join(''); h.scrollTop = h.scrollHeight; }
     function undoLastMove() { if(history.length>1){ history.pop(); currentIndex = history.length - 1; render(); } }
     function resetBoard() { if(confirm("初期化しますか？")){ history=[history[0]]; currentIndex=0; render(); } }
-
     function getS() { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
     function setS(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
-
     function saveKifu(isAsNew) {
         const name = document.getElementById('kifuName').value;
         if (!name) return alert("名前を入れてください");
@@ -319,7 +308,6 @@
         if (isAsNew && data[name]) return alert("その名前は既に存在します。");
         data[name] = history; setS(data); updateList(); alert("保存しました");
     }
-
     function renameKifu() {
         const oldName = document.getElementById('kifuList').value;
         const newName = document.getElementById('kifuName').value;
@@ -330,24 +318,20 @@
         data[newName] = data[oldName]; delete data[oldName]; setS(data); updateList();
         document.getElementById('kifuList').value = newName; alert("変更しました");
     }
-
     function loadKifu() {
         const n = document.getElementById('kifuList').value;
         if (!n) return alert("選んでください");
         const data = getS();
         if (data[n]) { history = data[n]; currentIndex = 0; selected = null; render(); }
     }
-
     function deleteKifu() {
         const n = document.getElementById('kifuList').value;
         if (n && confirm(`「${n}」を削除しますか？`)) { const d = getS(); delete d[n]; setS(d); updateList(); }
     }
-
     function updateList() {
         const d = getS(); const l = document.getElementById('kifuList');
         l.innerHTML = Object.keys(d).sort().map(k => `<option value="${k}">${k}</option>`).join('');
     }
-
     function exportAllKifu() {
         const data = getS();
         if (Object.keys(data).length === 0) return alert("データがありません。");
@@ -359,7 +343,6 @@
         a.download = `shogi_backup_${dateStr}.json`;
         a.click();
     }
-
     function importAllKifu(e) {
         const f = e.target.files[0]; if(!f) return;
         const r = new FileReader();
@@ -375,7 +358,6 @@
         };
         r.readAsText(f); e.target.value = "";
     }
-
     window.onload = () => { render(); updateList(); };
 </script>
 </body>
