@@ -2,12 +2,10 @@
 <html lang="ja">
 <head>
     <script>
-      // URLパラメータに ?nosave が含まれているか確認
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('nosave')) {
           console.log('Google Analytics is disabled via ?nosave parameter.');
       } else {
-          // 通常アクセスの場合のみGAを実行
           var script = document.createElement('script');
           script.async = true;
           script.src = "https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX";
@@ -325,8 +323,10 @@
             nb[fr][fc] = '';
         }
 
+        const zenkakuNum = ["１","２","３","４","５","６","７","８","９"];
         const moveTxt = (isSente?"▲":"△") + kanjiMap[p] + (isPromote?"成":"") + (isDrop?"打":"") + `(${9-tc}${tr+1})`;
-        const kifM = `${String.fromCharCode(9-tc+0xFEE0)}${["","一","二","三","四","五","六","七","八","九"][tr+1]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
+        // --- 修正箇所：Unicode計算をやめ、配列から文字を取得 ---
+        const kifM = `${zenkakuNum[8-tc]}${["一","二","三","四","五","六","七","八","九"][tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
 
         history = history.slice(0, currentIndex + 1);
         history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveTxt, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
