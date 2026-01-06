@@ -1,4 +1,3 @@
---- START OF FILE index.html ---
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -62,7 +61,8 @@
             .side-panel { width: 100% !important; max-width: 600px; }
             #board { grid-template-columns: repeat(9, 10.5vw) !important; grid-template-rows: repeat(9, 11.5vw) !important; }
             .piece { font-size: 7.5vw !important; }
-            .komadai-row { width: 95vw !important; }
+            .komadai-row { width: 95vw !important; height: 85px !important; }
+            .komadai { width: calc(50% - 4px) !important; }
         }
 
         .board-area { 
@@ -76,27 +76,27 @@
         }
         .board-reversable-wrapper.reversed { flex-direction: column-reverse; }
 
-        /* 駒台エリア：はみ出し防止のため最小高さを設定 */
+        /* 駒台エリア：サイズを完全に固定 */
         .komadai-row {
             display: flex; gap: 8px; width: 540px; justify-content: space-between;
-            min-height: 64px;
+            height: 85px; 
         }
         .reversed .komadai-row { flex-direction: row-reverse; }
 
         .komadai { 
-            flex: 1; min-height: 64px;
-            background: #a1887f; padding: 4px 6px; border-radius: 8px; 
-            display: flex; align-items: center; flex-wrap: wrap; /* 折り返し許可 */
-            gap: 4px; border: 2px solid transparent; transition: all 0.3s;
+            flex: 1; height: 85px;
+            background: #a1887f; padding: 2px 4px; border-radius: 8px; 
+            display: flex; align-content: flex-start; align-items: center; flex-wrap: wrap;
+            gap: 2px; border: 2px solid transparent; transition: all 0.3s;
+            overflow: hidden; 
             touch-action: manipulation;
         }
         .komadai.active-sente { border-color: var(--sente-accent); box-shadow: 0 0 12px var(--sente-accent); background: #b09a92; }
         .komadai.active-gote { border-color: #eee; box-shadow: 0 0 12px #eee; background: #b09a92; }
 
         .player-badge {
-            background: rgba(0,0,0,0.25); color: #fff; padding: 3px 5px;
-            border-radius: 4px; font-size: 0.65rem; font-weight: bold;
-            white-space: nowrap; transition: all 0.3s; flex-shrink: 0;
+            background: rgba(0,0,0,0.25); color: #fff; padding: 2px 0;
+            border-radius: 4px; font-size: 0.6rem; font-weight: bold;
             width: 100%; text-align: center; margin-bottom: 2px;
         }
         .active-sente .player-badge { background: var(--sente-accent); }
@@ -122,6 +122,9 @@
         .piece.nari { color: var(--nari-sente-color); }
         .piece.nari.gote { color: var(--nari-gote-color); }
 
+        /* 駒台用の小型駒 */
+        .piece-moti { font-size: 20px !important; }
+
         .side-panel { width: 360px; display: flex; flex-direction: column; gap: 15px; touch-action: auto; }
         .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; border-left: 4px solid var(--btn-bg); padding-left: 8px; }
@@ -139,9 +142,9 @@
         .history-item { padding: 8px; border-bottom: 1px solid #d7ccc8; font-size: 0.85rem; cursor: pointer; }
         .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); font-weight: bold; }
         
-        .moti-item { display: flex; align-items: center; cursor: pointer; padding: 2px; border-radius: 4px; position: relative; flex-shrink: 0; }
+        .moti-item { display: flex; align-items: center; cursor: pointer; padding: 1px; border-radius: 4px; position: relative; flex-shrink: 0; }
         .moti-item.selected { background: var(--highlight-bg); }
-        .moti-count { font-size: 11px; font-weight: bold; margin-left: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
+        .moti-count { font-size: 10px; font-weight: bold; margin-left: 1px; color: #fff; text-shadow: 1px 1px 2px #000; }
 
         #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: rgba(40, 40, 40, 0.9); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: toastIn 0.3s ease-out forwards; border-left: 5px solid var(--sente-accent); }
@@ -360,7 +363,6 @@
         updateHistoryUI();
     }
 
-    // 王手判定（特定のマスが攻撃されているか）
     function isKingInCheck(board, turn) {
         let kr = -1, kc = -1; 
         const targetKing = turn === 0 ? 'k' : 'K';
@@ -372,7 +374,6 @@
                 const p = board[r][c];
                 if (!p) continue;
                 const isSentePiece = p === p.toLowerCase();
-                // 手番ではない方の駒が王を狙っているかチェック
                 if ((turn === 0 && !isSentePiece) || (turn === 1 && isSentePiece)) {
                     if (isValidMove(r, c, kr, kc, p, board, true)) return true;
                 }
@@ -419,8 +420,8 @@
             if (counts[type]) {
                 const item = document.createElement('div');
                 item.className = 'moti-item' + (selected?.type === 'moti' && selected.piece === type && selected.owner === owner ? ' selected' : '');
-                const span = document.createElement('span'); span.className = 'piece' + (owner===1?' gote':'');
-                span.innerText = kanjiMap[type]; span.style.fontSize="22px"; item.appendChild(span);
+                const span = document.createElement('span'); span.className = 'piece piece-moti' + (owner===1?' gote':'');
+                span.innerText = kanjiMap[type]; item.appendChild(span);
                 if(counts[type]>1){ const b=document.createElement('span'); b.className='moti-count'; b.innerText=counts[type]; item.appendChild(b); }
                 item.onclick = (e) => { if(history[currentIndex].turn === owner) { selected = {type:'moti', piece:type, owner:owner}; render(); } };
                 el.appendChild(item);
@@ -458,22 +459,17 @@
 
     function canExistAt(t, row, isS) { if (isS) { if (t==='p'||t==='l') return row>0; if (t==='n') return row>1; } else { if (t==='p'||t==='l') return row<8; if (t==='n') return row<7; } return true; }
 
-    // 駒の動きバリデーション（isCheckingMode=true時は遮蔽物判定を厳密に行う）
     function isValidMove(fr, fc, tr, tc, p, b, isCheckingMode = false) {
         const isS = p === p.toLowerCase(); const dr = tr-fr, dc = tc-fc, adr = Math.abs(dr), adc = Math.abs(dc);
-        
-        // 移動先に自分の駒がある場合は移動不可（王手判定モード時は相手の王がいるはずなのでここを通る）
         if (!isCheckingMode && b[tr][tc] !== '' && (b[tr][tc] === b[tr][tc].toLowerCase()) === isS) return false;
         
         const t = p.toLowerCase();
-        // 遮蔽物チェック関数
         const checkPath = () => { 
             const sr = dr === 0 ? 0 : dr / adr;
             const sc = dc === 0 ? 0 : dc / adc;
-            let cr = fr + sr;
-            let cc = fc + sc;
+            let cr = fr + sr; let cc = fc + sc;
             while (cr !== tr || cc !== tc) {
-                if (b[cr][cc] !== '') return false; // 途中に駒があれば遮断
+                if (b[cr][cc] !== '') return false;
                 cr += sr; cc += sc;
             }
             return true;
@@ -615,5 +611,11 @@
         navigator.clipboard.writeText(kif).then(() => showToast(i18n[currentLang].copySuccess), () => showToast(i18n[currentLang].copyFail));
     };
 </script>
+<br>
+棋譜の保存やKIF形式での入出力に完全対応し、自分だけの対局記録や研究案を簡単に管理できる多機能将棋盤アプリです。<br>
+定跡の手順を実際に入力して保存できるため、手順の確認や暗記といった日々の研究・トレーニングに最適です。<br>
+厳密な反則チェックやスマホでの快適な操作性を備え、本格的な将棋の学習や棋譜の振り返りを強力にサポートします。<br><br>
+
+This versatile Shogi app fully supports KIF format I/O and local saving, allowing you to manage your personal game records and research ideas with ease. Since you can input and save joseki sequences, it is the perfect tool for daily training and move memorization. With strict rule-checking and a mobile-optimized interface, it provides powerful support for serious Shogi study and game review.
 </body>
 </html>
