@@ -219,102 +219,111 @@
         document.getElementById('senteKomadaiContainer').className = "komadai sente" + (data.turn===0 ? " active-sente" : "");
         document.getElementById('goteKomadaiContainer').className = "komadai gote" + (data.turn===1 ? " active-gote" : "");
         
-        // 王手判定
-        const isCheck = (() => {
-            // 盤面から自分の王の位置を探す
-            let king = data.turn === 0 ? 'k' : 'K';
-            let kr = -1, kc = -1;
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (data.board[r][c] && data.board[r][c].toLowerCase() === 'k' && ((data.turn === 0 && data.board[r][c] === 'k') || (data.turn === 1 && data.board[r][c] === 'K'))) {
-                        kr = r; kc = c;
-                    }
+        // 王手判定と遮断駒特定
+        let isCheck = false;
+        let blockPiece = null;
+        let blockPos = null;
+        // 盤面から自分の王の位置を探す
+        let king = data.turn === 0 ? 'k' : 'K';
+        let kr = -1, kc = -1;
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (data.board[r][c] && data.board[r][c].toLowerCase() === 'k' && ((data.turn === 0 && data.board[r][c] === 'k') || (data.turn === 1 && data.board[r][c] === 'K'))) {
+                    kr = r; kc = c;
                 }
             }
-            if (kr === -1) return false;
-            // 相手の全駒から王に利く手があるか判定
+        }
+        if (kr !== -1) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     const p = data.board[r][c];
                     if (!p) continue;
                     if ((data.turn === 0 && p === p.toUpperCase()) || (data.turn === 1 && p === p.toLowerCase())) {
-                        // ...既存の王手判定ロジック...
-                        // ここはisKingInCheckの中身と同じ
                         const t = p.toLowerCase();
                         const dr = kr - r, dc = kc - c, adr = Math.abs(dr), adc = Math.abs(dc);
-                        if (t === 'p') {
-                            if (dc === 0 && ((p === 'p' && dr === -1) || (p === 'P' && dr === 1))) return true;
-                        } else if (t === 'n') {
-                            if (adc === 1 && ((p === 'n' && dr === -2) || (p === 'N' && dr === 2))) return true;
-                        } else if (t === 's') {
-                            if ((adr === 1 && adc === 1) || (adc === 0 && ((p === 's' && dr === -1) || (p === 'S' && dr === 1)))) return true;
-                        } else if (t === 'g' || t === '+p' || t === '+l' || t === '+n' || t === '+s') {
-                            if (adr <= 1 && adc <= 1 && !((p === 'g' || p === '+p' || p === '+l' || p === '+n' || p === '+s') ? (dr === 1 && adc === 1) : (dr === -1 && adc === 1))) return true;
-                        } else if (t === 'k') {
-                            if (adr <= 1 && adc <= 1) return true;
-                        } else if (t === 'l') {
-                            if (dc === 0 && ((p === 'l' && dr < 0) || (p === 'L' && dr > 0))) {
-                                let blocked = false;
-                                for (let i = 1; i < Math.abs(dr); i++) {
-                                    let nr = r + (dr > 0 ? i : -i);
-                                    if (data.board[nr][c] !== '') { blocked = true; break; }
+                        // 飛車・竜による王手
+                        if ((t === 'r' || t === '+r') && (dr === 0 || dc === 0)) {
+                            let sr = dr === 0 ? 0 : dr / Math.abs(dr);
+                            let sc = dc === 0 ? 0 : dc / Math.abs(dc);
+                            let nr = r + sr, nc = c + sc;
+                            let foundBlock = false;
+                            while (nr !== kr || nc !== kc) {
+                                if (data.board[nr][nc] !== '') {
+                                    if (!foundBlock) {
+                                        foundBlock = true;
+                                        blockPiece = data.board[nr][nc];
+                                        blockPos = { r: nr, c: nc };
+                                    } else {
+                                        foundBlock = false;
+                                        break;
+                                    }
                                 }
-                                if (!blocked) return true;
+                                nr += sr; nc += sc;
                             }
-                        } else if (t === 'r') {
-                            if ((dr === 0 || dc === 0)) {
-                                let blocked = false;
-                                let sr = dr === 0 ? 0 : dr / Math.abs(dr);
-                                let sc = dc === 0 ? 0 : dc / Math.abs(dc);
-                                let nr = r + sr, nc = c + sc;
-                                while (nr !== kr || nc !== kc) {
-                                    if (data.board[nr][nc] !== '') { blocked = true; break; }
-                                    nr += sr; nc += sc;
+                            if (foundBlock) {
+                                isCheck = true;
+                                break;
+                            }
+                        }
+                        // 香車による王手
+                        else if ((t === 'l' || t === '+l') && dc === 0 && ((p === 'l' && dr < 0) || (p === 'L' && dr > 0))) {
+                            let sr = dr === 0 ? 0 : dr / Math.abs(dr);
+                            let sc = 0;
+                            let nr = r + sr, nc = c;
+                            let foundBlock = false;
+                            while (nr !== kr) {
+                                if (data.board[nr][nc] !== '') {
+                                    if (!foundBlock) {
+                                        foundBlock = true;
+                                        blockPiece = data.board[nr][nc];
+                                        blockPos = { r: nr, c: nc };
+                                    } else {
+                                        foundBlock = false;
+                                        break;
+                                    }
                                 }
-                                if (!blocked) return true;
+                                nr += sr;
                             }
-                        } else if (t === 'b') {
-                            if (adr === adc) {
-                                let blocked = false;
-                                let sr = dr / adr, sc = dc / adc;
-                                let nr = r + sr, nc = c + sc;
-                                while (nr !== kr || nc !== kc) {
-                                    if (data.board[nr][nc] !== '') { blocked = true; break; }
-                                    nr += sr; nc += sc;
+                            if (foundBlock) {
+                                isCheck = true;
+                                break;
+                            }
+                        }
+                        // 角・馬による王手
+                        else if ((t === 'b' || t === '+b') && adr === adc) {
+                            let sr = dr / adr;
+                            let sc = dc / adc;
+                            let nr = r + sr, nc = c + sc;
+                            let foundBlock = false;
+                            while (nr !== kr || nc !== kc) {
+                                if (data.board[nr][nc] !== '') {
+                                    if (!foundBlock) {
+                                        foundBlock = true;
+                                        blockPiece = data.board[nr][nc];
+                                        blockPos = { r: nr, c: nc };
+                                    } else {
+                                        foundBlock = false;
+                                        break;
+                                    }
                                 }
-                                if (!blocked) return true;
+                                nr += sr; nc += sc;
                             }
-                        } else if (t === '+r') {
-                            if ((dr === 0 || dc === 0)) {
-                                let blocked = false;
-                                let sr = dr === 0 ? 0 : dr / Math.abs(dr);
-                                let sc = dc === 0 ? 0 : dc / Math.abs(dc);
-                                let nr = r + sr, nc = c + sc;
-                                while (nr !== kr || nc !== kc) {
-                                    if (data.board[nr][nc] !== '') { blocked = true; break; }
-                                    nr += sr; nc += sc;
-                                }
-                                if (!blocked) return true;
+                            if (foundBlock) {
+                                isCheck = true;
+                                break;
                             }
-                            if (adr === 1 && adc === 1) return true;
-                        } else if (t === '+b') {
-                            if (adr === adc) {
-                                let blocked = false;
-                                let sr = dr / adr, sc = dc / adc;
-                                let nr = r + sr, nc = c + sc;
-                                while (nr !== kr || nc !== kc) {
-                                    if (data.board[nr][nc] !== '') { blocked = true; break; }
-                                    nr += sr; nc += sc;
-                                }
-                                if (!blocked) return true;
+                        }
+                        // 通常の王手
+                        else {
+                            // 既存の王手判定
+                            if (isKingInCheck(data.board, data.turn)) {
+                                isCheck = true;
                             }
-                            if (adr <= 1 && adc <= 1) return true;
                         }
                     }
                 }
             }
-            return false;
-        })();
+        }
 
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
@@ -329,12 +338,24 @@
                         if (isValidMove(selected.r, selected.c, r, c, p, data.board)) {
                             // 王手時は王手を防ぐ手のみ
                             if (isCheck) {
-                                // 仮盤面でその手を指した後に王手が解除されるか判定
-                                const tempBoard = JSON.parse(JSON.stringify(data.board));
-                                tempBoard[r][c] = tempBoard[selected.r][selected.c];
-                                tempBoard[selected.r][selected.c] = '';
-                                if (!isKingInCheck(tempBoard, data.turn)) {
-                                    cell.classList.add('can-move');
+                                // 飛車・竜による遮断駒のみハイライト
+                                if (blockPos) {
+                                    if (selected.r === blockPos.r && selected.c === blockPos.c) {
+                                        const tempBoard = JSON.parse(JSON.stringify(data.board));
+                                        tempBoard[r][c] = tempBoard[selected.r][selected.c];
+                                        tempBoard[selected.r][selected.c] = '';
+                                        if (!isKingInCheck(tempBoard, data.turn)) {
+                                            cell.classList.add('can-move');
+                                        }
+                                    }
+                                } else {
+                                    // 通常の王手解除
+                                    const tempBoard = JSON.parse(JSON.stringify(data.board));
+                                    tempBoard[r][c] = tempBoard[selected.r][selected.c];
+                                    tempBoard[selected.r][selected.c] = '';
+                                    if (!isKingInCheck(tempBoard, data.turn)) {
+                                        cell.classList.add('can-move');
+                                    }
                                 }
                             } else {
                                 cell.classList.add('can-move');
@@ -345,10 +366,21 @@
                             if (selected.piece !== 'p' || !isNifu(c, data.turn===0, data.board)) {
                                 // 王手時は王手を防ぐ手のみ
                                 if (isCheck) {
-                                    const tempBoard = JSON.parse(JSON.stringify(data.board));
-                                    tempBoard[r][c] = data.turn === 0 ? selected.piece : selected.piece.toUpperCase();
-                                    if (!isKingInCheck(tempBoard, data.turn)) {
-                                        cell.classList.add('can-move');
+                                    // 持ち駒は遮断駒の位置のみハイライト
+                                    if (blockPos) {
+                                        if (r === blockPos.r && c === blockPos.c) {
+                                            const tempBoard = JSON.parse(JSON.stringify(data.board));
+                                            tempBoard[r][c] = data.turn === 0 ? selected.piece : selected.piece.toUpperCase();
+                                            if (!isKingInCheck(tempBoard, data.turn)) {
+                                                cell.classList.add('can-move');
+                                            }
+                                        }
+                                    } else {
+                                        const tempBoard = JSON.parse(JSON.stringify(data.board));
+                                        tempBoard[r][c] = data.turn === 0 ? selected.piece : selected.piece.toUpperCase();
+                                        if (!isKingInCheck(tempBoard, data.turn)) {
+                                            cell.classList.add('can-move');
+                                        }
                                     }
                                 } else {
                                     cell.classList.add('can-move');
