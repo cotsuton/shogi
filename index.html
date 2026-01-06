@@ -1,5 +1,3 @@
---- START OF FILE index.html ---
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -43,7 +41,6 @@
             --gote-rotate: 180deg;
         }
 
-        /* 全体的なスクロールとズームの抑制 */
         * { 
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent;
@@ -54,7 +51,8 @@
             font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; 
             background: #1a1a1a; color: var(--text-main); display: flex; flex-direction: column;
             align-items: center; margin: 0; padding: 10px; user-select: none;
-            overscroll-behavior: none; /* プルリフレッシュ防止 */
+            /* プルリフレッシュは止めるがスクロールは許可 */
+            overscroll-behavior-y: none;
         }
 
         .lang-control { width: 100%; max-width: 1400px; display: flex; justify-content: flex-end; margin-bottom: 5px; }
@@ -72,7 +70,8 @@
 
         .board-area { 
             display: flex; flex-direction: column; gap: 5px; align-items: center; flex: 1;
-            touch-action: none; /* スマホでのスクロール・ズームを完全に無効化 */
+            /* manipulationにすることでスクロールを許可し、ダブルタップズームのみ禁止する */
+            touch-action: manipulation; 
         }
         
         .board-reversable-wrapper {
@@ -87,7 +86,7 @@
             display: flex; align-items: center; flex-wrap: nowrap;
             gap: 8px; border: 2px solid transparent; transition: all 0.3s;
             overflow: hidden;
-            touch-action: none; /* 駒台での操作時に画面を動かさない */
+            touch-action: manipulation;
         }
         .komadai.active-sente { border-color: var(--sente-accent); box-shadow: 0 0 12px var(--sente-accent); background: #b09a92; }
         .komadai.active-gote { border-color: #eee; box-shadow: 0 0 12px #eee; background: #b09a92; }
@@ -105,7 +104,7 @@
         #board { 
             display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); 
             background: var(--board-bg); border: 1px solid var(--cell-border);
-            touch-action: none;
+            touch-action: manipulation;
         }
         .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
         .cell.selected { background: var(--highlight-bg); }
@@ -347,7 +346,8 @@
                     span.className = 'piece ' + (p === p.toUpperCase() ? 'gote ' : 'sente ') + (p.includes('+') ? 'nari' : '');
                     span.innerText = kanjiMap[p.toLowerCase()]; cell.appendChild(span);
                 }
-                cell.onclick = (e) => { e.preventDefault(); handleCellClick(r, c); }; boardEl.appendChild(cell);
+                // onclickの中でブラウザのデフォルト挙動を少し抑制
+                cell.onclick = (e) => { handleCellClick(r, c); }; boardEl.appendChild(cell);
             }
         }
         renderMoti('senteKomadaiContainer', data.senteMoti, 0);
@@ -407,7 +407,7 @@
                 const span = document.createElement('span'); span.className = 'piece' + (owner===1?' gote':'');
                 span.innerText = kanjiMap[type]; span.style.fontSize="30px"; item.appendChild(span);
                 if(counts[type]>1){ const b=document.createElement('span'); b.className='moti-count'; b.innerText=counts[type]; item.appendChild(b); }
-                item.onclick = (e) => { e.preventDefault(); if(history[currentIndex].turn === owner) { selected = {type:'moti', piece:type, owner:owner}; render(); } };
+                item.onclick = (e) => { if(history[currentIndex].turn === owner) { selected = {type:'moti', piece:type, owner:owner}; render(); } };
                 el.appendChild(item);
             }
         });
@@ -545,7 +545,7 @@
         const h = document.getElementById('history');
         h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i === 0 ? x.moveText : i + '. ' + x.moveText}</div>`).join('');
         const activeItem = h.querySelector('.current-move');
-        // スマホ（縦長画面）では、タップによる自動スクロール（画面ジャンプ）を防止するため無効化
+        // スマホでは自動スクロールを禁止
         const isMobile = /iPhone|Android.+Mobile|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent) || window.innerWidth < 1000;
         if (activeItem && !isMobile) activeItem.scrollIntoView({ block: 'nearest' });
     }
