@@ -733,7 +733,9 @@
         const h = document.getElementById('history');
         h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i === 0 ? x.moveText : i + '. ' + x.moveText}</div>`).join('');
         const activeItem = h.querySelector('.current-move');
-        if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
+        // スマホの場合はスクロールしない
+        const isMobile = /iPhone|Android.+Mobile|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+        if (activeItem && !isMobile) activeItem.scrollIntoView({ block: 'nearest' });
     }
     function jumpTo(i) { currentIndex = i; selected = null; render(); }
     function prevMove() { if(currentIndex > 0) jumpTo(currentIndex-1); }
