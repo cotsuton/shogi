@@ -302,37 +302,97 @@
     }
     function processPromotion(n) { document.getElementById('promoteSelector').style.display='none'; executeMove(pendingMove.fr, pendingMove.fc, pendingMove.tr, pendingMove.tc, pendingMove.p, n); }
 
+    function getKifuMoveText(fr, fc, tr, tc, pCode, isPromote, isDrop, board, turn, lastPos) {
+        const isSente = turn === 0;
+        const zenNum = ["１","２","３","４","５","６","７","８","９"];
+        const kanNum = ["一","二","三","四","五","六","七","八","九"];
+        
+        let txt = isSente ? "▲" : "△";
+        if (lastPos && lastPos.r === tr && lastPos.c === tc) {
+            txt += "同";
+        } else {
+            txt += zenNum[8-tc] + kanNum[tr];
+        }
+
+        const basePiece = pieceToKif[pCode];
+        txt += basePiece;
+
+        if (isDrop) {
+            return txt + "打";
+        }
+
+        // 複数駒の移動判定 (右・左・直など)
+        const competitors = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (r === fr && c === fc) continue;
+                const p = board[r][c];
+                if (p && p.toLowerCase() === (isSente ? pCode : pCode.toUpperCase())) {
+                    if (isValidMove(r, c, tr, tc, p, board)) {
+                        competitors.push({r, c});
+                    }
+                }
+            }
+        }
+
+        if (competitors.length > 0) {
+            const isGote = !isSente;
+            const myC = fc, myR = fr;
+            
+            // 左右判定
+            let side = "";
+            const allC = competitors.map(p => p.c).concat(myC);
+            const minC = Math.min(...allC), maxC = Math.max(...allC);
+            if (minC !== maxC) {
+                if (myC === (isGote ? minC : maxC)) side = "右";
+                else if (myC === (isGote ? maxC : minC)) side = "左";
+                else side = "直"; // 3枚以上の場合の簡易
+            }
+
+            // 上下判定
+            let vert = "";
+            const sameColComps = competitors.filter(p => p.c === myC);
+            if (sameColComps.length > 0) {
+                const allR = sameColComps.map(p => p.r).concat(myR);
+                const minR = Math.min(...allR), maxR = Math.max(...allR);
+                if (myR === (isGote ? maxR : minR)) vert = "上";
+                else if (myR === (isGote ? minR : maxR)) vert = "引";
+                else vert = "寄";
+            }
+            txt += (side + vert);
+        }
+
+        if (isPromote) txt += "成";
+        else {
+            // 成れるのに成らなかった場合のみ「不成」
+            const canProm = ['p','l','n','s','b','r'].includes(pCode) && !pCode.includes('+') && (isSente ? tr<=2||fr<=2 : tr>=6||fr>=6);
+            if (canProm) txt += "不成";
+        }
+
+        return txt;
+    }
+
     function executeMove(fr, fc, tr, tc, p, isPromote, isDrop = false) {
         const d = history[currentIndex];
         const nb = JSON.parse(JSON.stringify(d.board));
         const sm = [...d.senteMoti], gm = [...d.goteMoti];
         const isSente = d.turn === 0;
         
+        const moveText = getKifuMoveText(fr, fc, tr, tc, p, isPromote, isDrop, d.board, d.turn, d.lastPos);
+        
         if (isDrop) {
             nb[tr][tc] = isSente ? p.toLowerCase() : p.toUpperCase();
             (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p.toLowerCase()), 1);
         } else {
             if (nb[tr][tc]) { const cap = nb[tr][tc].replace('+', '').toLowerCase(); (isSente ? sm : gm).push(cap); }
-            const finalP = isPromote ? "+" + p : p;
-            nb[tr][tc] = isSente ? finalP : finalP.toUpperCase();
+            nb[tr][tc] = isSente ? (isPromote ? "+" + p : p) : (isPromote ? "+" + p : p).toUpperCase();
             nb[fr][fc] = '';
         }
 
-        const zenkakuNum = ["１","２","３","４","５","６","７","８","９"];
-        const kanjiNum = ["一","二","三","四","五","六","七","八","九"];
-        
-        let moveTxt = (isSente?"▲":"△");
-        if (d.lastPos && d.lastPos.r === tr && d.lastPos.c === tc) {
-            moveTxt += "同";
-        } else {
-            moveTxt += zenkakuNum[8-tc] + kanjiNum[tr];
-        }
-        moveTxt += pieceToKif[p] + (isPromote?"成":"") + (isDrop?"打":"");
-        
-        const kifM = `${zenkakuNum[8-tc]}${kanjiNum[tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
+        const kifM = `${"１２３４５６７８９"[8-tc]}${["一","二","三","四","五","六","七","八","九"][tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
         
         history = history.slice(0, currentIndex + 1);
-        history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveTxt, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
+        history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveText, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
         currentIndex++; render();
     }
 
@@ -347,7 +407,7 @@
                 lines.forEach(line => {
                     const m = line.match(/^\s*(\d+)\s+([１-９一-九同].+?)(?:\s|\(|$)/);
                     if (!m) return;
-                    let moveStr = m[2]; let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成');
+                    let moveStr = m[2]; let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成') && !moveStr.includes('不成');
                     if (moveStr.startsWith('同')) { tr = history[currentIndex].lastPos.r; tc = history[currentIndex].lastPos.c; }
                     else { tc = 9 - ("１２３４５６７８９".indexOf(moveStr[0]) + 1); tr = "一二三四五六七八九".indexOf(moveStr[1]); }
                     const pChar = moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0];
@@ -373,7 +433,6 @@
                 const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
                 d[kName] = history;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-                document.getElementById('kifuName').value = kName;
                 updateList();
                 document.getElementById('kifuList').value = kName;
                 jumpTo(history.length - 1);
