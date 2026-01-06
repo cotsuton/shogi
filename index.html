@@ -1,3 +1,5 @@
+--- START OF FILE index.html ---
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -37,7 +39,6 @@
             --sente-accent: #d35400;
             --btn-bg: #5d4037;
             
-            /* 駒の向き制御用変数 */
             --sente-rotate: 0deg;
             --gote-rotate: 180deg;
         }
@@ -59,26 +60,46 @@
             .side-panel { width: 100% !important; max-width: 600px; }
             #board { grid-template-columns: repeat(9, 10.5vw) !important; grid-template-rows: repeat(9, 11.5vw) !important; }
             .piece { font-size: 7.5vw !important; }
-            .komadai { width: 95vw !important; height: 65px !important; }
+            .komadai { width: 95vw !important; } /* 高さは固定値を維持 */
         }
 
-        .board-area { display: flex; flex-direction: column; gap: 10px; align-items: center; flex: 1; }
+        .board-area { display: flex; flex-direction: column; gap: 5px; align-items: center; flex: 1; }
         
-        /* 反転用ラッパー: 盤面と駒台のみを反転させる */
         .board-reversable-wrapper {
-            display: flex; flex-direction: column; gap: 10px; align-items: center;
+            display: flex; flex-direction: column; gap: 5px; align-items: center;
             width: 100%;
         }
         .board-reversable-wrapper.reversed { flex-direction: column-reverse; }
 
         .komadai { 
-            width: 540px; height: 75px; background: #a1887f; padding: 5px 15px; border-radius: 8px; 
-            display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border: 2px solid transparent;
+            width: 540px; 
+            height: 60px; /* 高さ完全固定 */
+            background: #a1887f; padding: 0 12px; border-radius: 8px; 
+            display: flex; align-items: center; flex-wrap: nowrap; /* 折り返さない */
+            gap: 8px; border: 2px solid transparent; transition: all 0.3s;
+            overflow: hidden;
         }
-        .komadai.active-sente { border-color: var(--sente-accent); box-shadow: 0 0 10px var(--sente-accent); }
-        .komadai.active-gote { border-color: #eee; box-shadow: 0 0 10px #eee; }
+        .komadai.active-sente { border-color: var(--sente-accent); box-shadow: 0 0 12px var(--sente-accent); background: #b09a92; }
+        .komadai.active-gote { border-color: #eee; box-shadow: 0 0 12px #eee; background: #b09a92; }
 
-        .board-wrapper { position: relative; background: #4e342e; padding: 10px; border-radius: 4px; }
+        /* 先手後手バッジ */
+        .player-badge {
+            background: rgba(0,0,0,0.25);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .active-sente .player-badge { background: var(--sente-accent); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .active-gote .player-badge { background: #eee; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+        .reversed .player-badge { transform: rotate(180deg); }
+
+        .board-wrapper { position: relative; background: #4e342e; padding: 10px; border-radius: 4px; margin: 5px 0; }
         #board { display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); background: var(--board-bg); border: 1px solid var(--cell-border); }
         .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
         .cell.selected { background: var(--highlight-bg); }
@@ -89,25 +110,12 @@
         }
 
         .piece {
-            font-size: 44px;
-            font-weight: bold;
-            pointer-events: none;
-            color: var(--sente-color);
-            position: relative;
-            z-index: 2;
-            transform: rotate(var(--sente-rotate));
-            transition: transform 0.3s;
+            font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color);
+            position: relative; z-index: 2; transform: rotate(var(--sente-rotate)); transition: transform 0.3s;
         }
-        .piece.gote {
-            color: var(--gote-color);
-            transform: rotate(var(--gote-rotate));
-        }
-        .piece.nari {
-            color: var(--nari-sente-color);
-        }
-        .piece.nari.gote {
-            color: var(--nari-gote-color);
-        }
+        .piece.gote { color: var(--gote-color); transform: rotate(var(--gote-rotate)); }
+        .piece.nari { color: var(--nari-sente-color); }
+        .piece.nari.gote { color: var(--nari-gote-color); }
 
         .side-panel { width: 360px; display: flex; flex-direction: column; gap: 15px; }
         .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -126,9 +134,19 @@
         .history-item { padding: 8px; border-bottom: 1px solid #d7ccc8; font-size: 0.85rem; cursor: pointer; }
         .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); font-weight: bold; }
         
-        .moti-item { display: flex; align-items: center; cursor: pointer; padding: 2px; border-radius: 4px; position: relative; }
+        .moti-item { display: flex; align-items: center; cursor: pointer; padding: 2px; border-radius: 4px; position: relative; flex-shrink: 0; }
         .moti-item.selected { background: var(--highlight-bg); }
-        .moti-count { font-size: 12px; font-weight: bold; margin-left: 2px; }
+        .moti-count { font-size: 12px; font-weight: bold; margin-left: 2px; color: #fff; text-shadow: 1px 1px 2px #000; }
+
+        #toast-container {
+            position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+        }
+        .toast {
+            background: rgba(40, 40, 40, 0.9); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: toastIn 0.3s ease-out forwards; border-left: 5px solid var(--sente-accent);
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(20px); } }
     </style>
 </head>
 <body>
@@ -139,7 +157,6 @@
 
 <div class="main-container">
     <div class="board-area">
-        <!-- 盤面と駒台のみを反転させるラッパー -->
         <div class="board-reversable-wrapper" id="boardReversableWrapper">
             <div class="komadai gote" id="goteKomadaiContainer"></div>
             <div class="board-wrapper">
@@ -152,8 +169,7 @@
             <div class="komadai sente" id="senteKomadaiContainer"></div>
         </div>
         
-        <!-- 操作ボタンは反転しない -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 540px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 540px; margin-top: 5px;">
             <button class="action-btn" onclick="jumpTo(0)">|&lt;</button>
             <button class="action-btn" onclick="prevMove()">&lt;</button>
             <button class="action-btn" onclick="nextMove()">&gt;</button>
@@ -170,16 +186,14 @@
                 <button class="action-btn" style="background:#8d6e63;" onclick="renameKifu()" data-t="btnRename">名前変更</button>
             </div>
         </div>
-
         <div class="card">
-            <span class="card-title" data-t="listTitle">保存リスト (複数選択可)</span>
+            <span class="card-title" data-t="listTitle">保存リスト</span>
             <select id="kifuList" size="5" class="kifu-select" multiple></select>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                 <button class="action-btn" style="background:#2c3e50;" onclick="loadKifu()" data-t="btnLoad">読込</button>
                 <button class="action-btn" style="background:#c0392b;" onclick="deleteKifu()" data-t="btnDelete">選択削除</button>
             </div>
         </div>
-
         <div class="card">
             <span class="card-title" data-t="backupTitle">入出力</span>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
@@ -193,14 +207,11 @@
             <input type="file" id="kifIn" style="display:none" accept=".kif" onchange="importKIF(event)">
             <input type="file" id="jsonIn" style="display:none" accept=".json" onchange="importAllJSON(event)">
         </div>
-
         <div class="card">
             <span class="card-title" data-t="historyTitle">指し手履歴</span>
             <div id="history" class="history-box"></div>
             <button class="action-btn" style="margin-top:8px;background:#1976d2;" onclick="copyKIF()">KIF形式コピー</button>
         </div>
-
-        <!-- 設定パネルを一番下に移動 -->
         <div class="card">
             <span class="card-title" data-t="settingsTitle">設定</span>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
@@ -211,31 +222,33 @@
     </div>
 </div>
 
+<div id="toast-container"></div>
+
 <script>
     const i18n = {
         ja: {
-            promote: "成る", dontPromote: "成らず",
+            promote: "成る", dontPromote: "成らず", senteBadge: "▲ 先手", goteBadge: "△ 後手",
             saveTitle: "棋譜の保存", placeholderName: "棋譜名を入力...", btnSave: "新規保存", btnRename: "名前変更",
             listTitle: "保存リスト", btnLoad: "読込", btnDelete: "選択削除",
             backupTitle: "入出力", btnExport: "KIF出力", btnImportKif: "KIF読込", allDL: "まとめてDL", allUL: "まとめてUL",
-            historyTitle: "指し手履歴", startPos: "開始局面",
-            msgSaved: "保存しました", msgNoData: "データがありません",
+            historyTitle: "指し手履歴", startPos: "開始局面", msgSaved: "保存しました", msgNoData: "データがありません",
             msgRestoreConfirm: "既存データに上書き統合しますか？", msgDone: "完了しました", msgKifError: "KIF解析エラー",
             msgSelectOne: "読込には1つだけ選択してください", msgRenamePrompt: "新しい名前を入力してください",
             msgConfirmDel: "選択した棋譜を削除しますか？", msgUchifuzume: "打ち歩詰めは反則です",
-            settingsTitle: "設定", btnRotate: "盤面反転", btnSound: "効果音: "
+            settingsTitle: "設定", btnRotate: "盤面反転", btnSound: "効果音: ",
+            copySuccess: "KIF形式でコピーしました", copyFail: "コピーに失敗しました"
         },
         en: {
-            promote: "Promote", dontPromote: "No Promote",
+            promote: "Promote", dontPromote: "No Promote", senteBadge: "Sente (Black)", goteBadge: "Gote (White)",
             saveTitle: "Save Kifu", placeholderName: "Enter name...", btnSave: "Save New", btnRename: "Rename",
             listTitle: "Kifu List", btnLoad: "Load", btnDelete: "Delete Selected",
             backupTitle: "I/O", btnExport: "Export KIF", btnImportKif: "Import KIF", allDL: "Bulk DL", allUL: "Bulk UL",
-            historyTitle: "History", startPos: "Start",
-            msgSaved: "Saved", msgNoData: "No data",
+            historyTitle: "History", startPos: "Start", msgSaved: "Saved", msgNoData: "No data",
             msgRestoreConfirm: "Merge with existing data?", msgDone: "Done", msgKifError: "KIF Error",
             msgSelectOne: "Please select only one to load", msgRenamePrompt: "Enter new name",
-            msgConfirmDel: "Delete selected items?", msgUchifuzume: "Pawn Drop Mate is illegal (Uchifuzume)",
-            settingsTitle: "Settings", btnRotate: "Rotate Board", btnSound: "Sound: "
+            msgConfirmDel: "Delete selected items?", msgUchifuzume: "Pawn Drop Mate is illegal",
+            settingsTitle: "Settings", btnRotate: "Rotate Board", btnSound: "Sound: ",
+            copySuccess: "Copied to clipboard", copyFail: "Copy failed"
         }
     };
 
@@ -252,23 +265,24 @@
     }
     function toggleLang() { currentLang = currentLang === 'ja' ? 'en' : 'ja'; localStorage.setItem('SHOGI_LANG', currentLang); updateUIStrings(); render(); }
 
+    function showToast(msg) {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div'); el.className = 'toast'; el.innerText = msg;
+        container.appendChild(el);
+        setTimeout(() => { el.style.animation = 'toastOut 0.3s ease-in forwards'; el.addEventListener('animationend', () => el.remove()); }, 3000);
+    }
+
     function toggleBoardRotation() {
         isRotated = !isRotated;
         const root = document.documentElement;
-        // 反転用のラッパーのみを対象にする
         const wrapper = document.getElementById('boardReversableWrapper');
         const btn = document.getElementById('btnRotate');
-        
         if (isRotated) {
-            root.style.setProperty('--sente-rotate', '180deg');
-            root.style.setProperty('--gote-rotate', '0deg');
-            wrapper.classList.add('reversed');
-            btn.classList.add('active');
+            root.style.setProperty('--sente-rotate', '180deg'); root.style.setProperty('--gote-rotate', '0deg');
+            wrapper.classList.add('reversed'); btn.classList.add('active');
         } else {
-            root.style.setProperty('--sente-rotate', '0deg');
-            root.style.setProperty('--gote-rotate', '180deg');
-            wrapper.classList.remove('reversed');
-            btn.classList.remove('active');
+            root.style.setProperty('--sente-rotate', '0deg'); root.style.setProperty('--gote-rotate', '180deg');
+            wrapper.classList.remove('reversed'); btn.classList.remove('active');
         }
         render();
     }
@@ -277,51 +291,21 @@
         isSoundOn = !isSoundOn;
         const btn = document.getElementById('btnSound');
         btn.innerText = i18n[currentLang].btnSound + (isSoundOn ? "ON" : "OFF");
-        if (isSoundOn) {
-            btn.classList.add('active');
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } else {
-            btn.classList.remove('active');
-        }
+        if (isSoundOn) { btn.classList.add('active'); if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        else { btn.classList.remove('active'); }
     }
 
-    // リアルな駒音を合成する関数
     function playMoveSound() {
         if (!isSoundOn || !audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
         const t = audioCtx.currentTime;
-        
-        // 1. 低音成分（木が響く音）
-        const osc1 = audioCtx.createOscillator();
-        const gain1 = audioCtx.createGain();
-        osc1.type = 'sine';
-        // 800Hzから急速にピッチダウンさせて打撃感を出す
-        osc1.frequency.setValueAtTime(800, t);
-        osc1.frequency.exponentialRampToValueAtTime(100, t + 0.15);
-        
-        gain1.gain.setValueAtTime(0.5, t);
-        gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-        
-        osc1.connect(gain1);
-        gain1.connect(audioCtx.destination);
-        osc1.start();
-        osc1.stop(t + 0.2);
-
-        // 2. 高音成分（硬いアタック音「パチッ」）
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.type = 'square'; // 短形波で鋭い音
-        osc2.frequency.setValueAtTime(2000, t);
-        osc2.frequency.exponentialRampToValueAtTime(100, t + 0.05);
-        
-        gain2.gain.setValueAtTime(0.1, t);
-        gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-        
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.start();
-        osc2.stop(t + 0.1);
+        const masterGain = audioCtx.createGain();
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.connect(audioCtx.destination); masterGain.connect(compressor);
+        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(600, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+        g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        osc.connect(g); g.connect(masterGain); osc.start(t); osc.stop(t + 0.1);
     }
 
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
@@ -331,13 +315,9 @@
     const STORAGE_KEY = 'SHOGI_APP_DATA_V5';
 
     const initBoard = [
-        ['L','N','S','G','K','G','S','N','L'],
-        ['','R','','','','','','B',''],
-        ['P','P','P','P','P','P','P','P','P'],
+        ['L','N','S','G','K','G','S','N','L'], ['','R','','','','','','B',''], ['P','P','P','P','P','P','P','P','P'],
         ['','','','','','','','',''],['','','','','','','','',''],['','','','','','','','',''],
-        ['p','p','p','p','p','p','p','p','p'],
-        ['','b','','','','','','r',''],
-        ['l','n','s','g','k','g','s','n','l']
+        ['p','p','p','p','p','p','p','p','p'], ['','b','','','','','','r',''], ['l','n','s','g','k','g','s','n','l']
     ];
 
     function getCleanHistory() { 
@@ -352,38 +332,28 @@
         
         for (let rowIdx = 0; rowIdx < 9; rowIdx++) {
             for (let colIdx = 0; colIdx < 9; colIdx++) {
-                // 反転時は座標を逆転
-                const r = isRotated ? 8 - rowIdx : rowIdx;
-                const c = isRotated ? 8 - colIdx : colIdx;
-
+                const r = isRotated ? 8 - rowIdx : rowIdx; const c = isRotated ? 8 - colIdx : colIdx;
                 const cell = document.createElement('div'); cell.className = 'cell';
                 if (selected?.type === 'board' && selected.r === r && selected.c === c) cell.classList.add('selected');
                 if (data.lastPos && data.lastPos.r === r && data.lastPos.c === c) cell.classList.add('last-move');
-
                 if (selected) {
                     if (selected.type === 'board') {
                         const p = data.board[selected.r][selected.c];
                         if (isValidMove(selected.r, selected.c, r, c, p, data.board)) {
                             const tempBoard = JSON.parse(JSON.stringify(data.board));
-                            tempBoard[r][c] = tempBoard[selected.r][selected.c];
-                            tempBoard[selected.r][selected.c] = '';
-                            if (!isKingInCheck(tempBoard, data.turn)) {
-                                cell.classList.add('can-move');
-                            }
+                            tempBoard[r][c] = tempBoard[selected.r][selected.c]; tempBoard[selected.r][selected.c] = '';
+                            if (!isKingInCheck(tempBoard, data.turn)) cell.classList.add('can-move');
                         }
                     } else if (selected.type === 'moti') {
                         if (data.board[r][c] === '' && canExistAt(selected.piece, r, data.turn===0)) {
                             if (selected.piece !== 'p' || !isNifu(c, data.turn===0, data.board)) {
                                 const tempBoard = JSON.parse(JSON.stringify(data.board));
                                 tempBoard[r][c] = data.turn === 0 ? selected.piece : selected.piece.toUpperCase();
-                                if (!isKingInCheck(tempBoard, data.turn)) {
-                                    cell.classList.add('can-move');
-                                }
+                                if (!isKingInCheck(tempBoard, data.turn)) cell.classList.add('can-move');
                             }
                         }
                     }
                 }
-
                 const p = data.board[r][c];
                 if (p) {
                     const span = document.createElement('span');
@@ -399,137 +369,39 @@
     }
 
     function isKingInCheck(board, turn) {
-        let king = turn === 0 ? 'k' : 'K';
-        let kr = -1, kc = -1;
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (board[r][c] && board[r][c].toLowerCase() === 'k' && ((turn === 0 && board[r][c] === 'k') || (turn === 1 && board[r][c] === 'K'))) {
-                    kr = r; kc = c;
-                }
-            }
-        }
+        let kr = -1, kc = -1; const king = turn === 0 ? 'k' : 'K';
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (board[r][c] === king) { kr = r; kc = c; }
         if (kr === -1) return false;
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                const p = board[r][c];
-                if (!p) continue;
-                if ((turn === 0 && p === p.toUpperCase()) || (turn === 1 && p === p.toLowerCase())) {
-                    const t = p.toLowerCase();
-                    const dr = kr - r, dc = kc - c, adr = Math.abs(dr), adc = Math.abs(dc);
-                    if (t === 'p') {
-                        if (dc === 0 && ((p === 'p' && dr === -1) || (p === 'P' && dr === 1))) return true;
-                    } else if (t === 'n') {
-                        if (adc === 1 && ((p === 'n' && dr === -2) || (p === 'N' && dr === 2))) return true;
-                    } else if (t === 's') {
-                        if ((adr === 1 && adc === 1) || (adc === 0 && ((p === 's' && dr === -1) || (p === 'S' && dr === 1)))) return true;
-                    } else if (t === 'g' || t === '+p' || t === '+l' || t === '+n' || t === '+s') {
-                        if (adr <= 1 && adc <= 1 && !((p === 'g' || p === '+p' || p === '+l' || p === '+n' || p === '+s') ? (dr === 1 && adc === 1) : (dr === -1 && adc === 1))) return true;
-                    } else if (t === 'k') {
-                        if (adr <= 1 && adc <= 1) return true;
-                    } else if (t === 'l') {
-                        if (dc === 0 && ((p === 'l' && dr < 0) || (p === 'L' && dr > 0))) {
-                            let blocked = false;
-                            for (let i = 1; i < Math.abs(dr); i++) {
-                                let nr = r + (dr > 0 ? i : -i);
-                                if (board[nr][c] !== '') { blocked = true; break; }
-                            }
-                            if (!blocked) return true;
-                        }
-                    } else if (t === 'r') {
-                        if ((dr === 0 || dc === 0)) {
-                            let blocked = false;
-                            let sr = dr === 0 ? 0 : dr / Math.abs(dr);
-                            let sc = dc === 0 ? 0 : dc / Math.abs(dc);
-                            let nr = r + sr, nc = c + sc;
-                            while (nr !== kr || nc !== kc) {
-                                if (board[nr][nc] !== '') { blocked = true; break; }
-                                nr += sr; nc += sc;
-                            }
-                            if (!blocked) return true;
-                        }
-                    } else if (t === 'b') {
-                        if (adr === adc) {
-                            let blocked = false;
-                            let sr = dr / adr, sc = dc / adc;
-                            let nr = r + sr, nc = c + sc;
-                            while (nr !== kr || nc !== kc) {
-                                if (board[nr][nc] !== '') { blocked = true; break; }
-                                nr += sr; nc += sc;
-                            }
-                            if (!blocked) return true;
-                        }
-                    } else if (t === '+r') {
-                        if ((dr === 0 || dc === 0)) {
-                            let blocked = false;
-                            let sr = dr === 0 ? 0 : dr / Math.abs(dr);
-                            let sc = dc === 0 ? 0 : dc / Math.abs(dc);
-                            let nr = r + sr, nc = c + sc;
-                            while (nr !== kr || nc !== kc) {
-                                if (board[nr][nc] !== '') { blocked = true; break; }
-                                nr += sr; nc += sc;
-                            }
-                            if (!blocked) return true;
-                        }
-                        if (adr === 1 && adc === 1) return true;
-                    } else if (t === '+b') {
-                        if (adr === adc) {
-                            let blocked = false;
-                            let sr = dr / adr, sc = dc / adc;
-                            let nr = r + sr, nc = c + sc;
-                            while (nr !== kr || nc !== kc) {
-                                if (board[nr][nc] !== '') { blocked = true; break; }
-                                nr += sr; nc += sc;
-                            }
-                            if (!blocked) return true;
-                        }
-                        if (adr <= 1 && adc <= 1) return true;
-                    }
-                }
-            }
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+            const p = board[r][c]; if (!p) continue;
+            if ((turn === 0 && p === p.toUpperCase()) || (turn === 1 && p === p.toLowerCase())) if (isValidMove(r, c, kr, kc, p, board)) return true;
         }
         return false;
     }
 
     function isNifu(col, isSente, board) {
-        for (let r = 0; r < 9; r++) {
-            const p = board[r][col];
-            if (isSente && p === 'p') return true;
-            if (!isSente && p === 'P') return true;
-        }
+        for (let r = 0; r < 9; r++) { const p = board[r][col]; if (isSente && p === 'p') return true; if (!isSente && p === 'P') return true; }
         return false;
     }
 
     function hasLegalMove(board, turn, moti) {
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                const p = board[r][c];
-                if (!p) continue;
-                if ((turn === 0 && p === p.toLowerCase()) || (turn === 1 && p === p.toUpperCase())) {
-                    for (let tr = 0; tr < 9; tr++) {
-                        for (let tc = 0; tc < 9; tc++) {
-                            if (isValidMove(r, c, tr, tc, p, board)) {
-                                const temp = JSON.parse(JSON.stringify(board));
-                                temp[tr][tc] = temp[r][c];
-                                temp[r][c] = '';
-                                if (!isKingInCheck(temp, turn)) return true;
-                            }
-                        }
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+            const p = board[r][c]; if (!p) continue;
+            if ((turn === 0 && p === p.toLowerCase()) || (turn === 1 && p === p.toUpperCase())) {
+                for (let tr = 0; tr < 9; tr++) for (let tc = 0; tc < 9; tc++) {
+                    if (isValidMove(r, c, tr, tc, p, board)) {
+                        const temp = JSON.parse(JSON.stringify(board));
+                        temp[tr][tc] = temp[r][c]; temp[r][c] = ''; if (!isKingInCheck(temp, turn)) return true;
                     }
                 }
             }
         }
         const uniqueMoti = [...new Set(moti)];
-        for (let i = 0; i < uniqueMoti.length; i++) {
-            const p = uniqueMoti[i];
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (board[r][c] === '') {
-                        if (p === 'p' && isNifu(c, turn === 0, board)) continue;
-                        if (!canExistAt(p, r, turn === 0)) continue;
-                        const temp = JSON.parse(JSON.stringify(board));
-                        temp[r][c] = turn === 0 ? p : p.toUpperCase();
-                        if (!isKingInCheck(temp, turn)) return true;
-                    }
+        for (let p of uniqueMoti) {
+            for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+                if (board[r][c] === '' && canExistAt(p, r, turn===0) && (p !== 'p' || !isNifu(c, turn===0, board))) {
+                    const temp = JSON.parse(JSON.stringify(board)); temp[r][c] = turn === 0 ? p : p.toUpperCase();
+                    if (!isKingInCheck(temp, turn)) return true;
                 }
             }
         }
@@ -538,6 +410,9 @@
 
     function renderMoti(id, pieces, owner) {
         const el = document.getElementById(id); el.innerHTML = '';
+        const badge = document.createElement('div'); badge.className = 'player-badge';
+        badge.innerText = owner === 0 ? i18n[currentLang].senteBadge : i18n[currentLang].goteBadge;
+        el.appendChild(badge);
         const counts = {}; (pieces||[]).forEach(p => counts[p] = (counts[p] || 0) + 1);
         ['r','b','g','s','n','l','p'].forEach(type => {
             if (counts[type]) {
@@ -558,47 +433,26 @@
             if (selected.type === 'board') {
                 if (isValidMove(selected.r, selected.c, r, c, d.board[selected.r][selected.c], d.board)) {
                     const tempBoard = JSON.parse(JSON.stringify(d.board));
-                    tempBoard[r][c] = tempBoard[selected.r][selected.c];
-                    tempBoard[selected.r][selected.c] = '';
-                    if (!isKingInCheck(tempBoard, d.turn)) {
-                        checkPromotion(selected.r, selected.c, r, c, d.board[selected.r][selected.c]);
-                    }
+                    tempBoard[r][c] = tempBoard[selected.r][selected.c]; tempBoard[selected.r][selected.c] = '';
+                    if (!isKingInCheck(tempBoard, d.turn)) checkPromotion(selected.r, selected.c, r, c, d.board[selected.r][selected.c]);
                     selected = null;
                 } else {
-                    const p = d.board[r][c];
-                    if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c};
-                    else selected = null;
+                    const p = d.board[r][c]; if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c}; else selected = null;
                 }
             } else if (selected.type === 'moti') {
                 const isSente = d.turn === 0;
                 if (d.board[r][c] === '' && canExistAt(selected.piece, r, isSente) && (selected.piece !== 'p' || !isNifu(c, isSente, d.board))) {
                     const tempBoard = JSON.parse(JSON.stringify(d.board));
                     tempBoard[r][c] = isSente ? selected.piece : selected.piece.toUpperCase();
-                    
-                    if (isKingInCheck(tempBoard, d.turn)) {
-                        // 王手放置
-                    } else {
-                        let isIllegal = false;
-                        if (selected.piece === 'p') {
-                            const oppTurn = 1 - d.turn;
-                            if (isKingInCheck(tempBoard, oppTurn)) {
-                                const oppMoti = oppTurn === 0 ? d.senteMoti : d.goteMoti;
-                                if (!hasLegalMove(tempBoard, oppTurn, oppMoti)) {
-                                    alert(i18n[currentLang].msgUchifuzume);
-                                    isIllegal = true;
-                                }
-                            }
-                        }
-                        if (!isIllegal) {
-                            executeMove(null, null, r, c, selected.piece, false, true);
-                        }
+                    if (!isKingInCheck(tempBoard, d.turn)) {
+                        if (selected.piece === 'p' && isKingInCheck(tempBoard, 1-d.turn) && !hasLegalMove(tempBoard, 1-d.turn, (1-d.turn===0?d.senteMoti:d.goteMoti))) showToast(i18n[currentLang].msgUchifuzume);
+                        else executeMove(null, null, r, c, selected.piece, false, true);
                     }
                     selected = null;
-                } else { selected = null; }
+                } else selected = null;
             }
         } else {
-            const p = d.board[r][c];
-            if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c};
+            const p = d.board[r][c]; if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c};
         }
         render();
     }
@@ -634,132 +488,71 @@
     function processPromotion(n) { document.getElementById('promoteSelector').style.display='none'; executeMove(pendingMove.fr, pendingMove.fc, pendingMove.tr, pendingMove.tc, pendingMove.p, n); }
 
     function getKifuMoveText(fr, fc, tr, tc, pCode, isPromote, isDrop, board, turn, lastPos) {
-        const isSente = turn === 0;
-        const zenNum = ["１","２","３","４","５","６","７","８","９"];
-        const kanNum = ["一","二","三","四","五","六","七","八","九"];
-        
-        let txt = isSente ? "▲" : "△";
-        
-        if (lastPos && lastPos.r === tr && lastPos.c === tc) {
-            txt += "同　";
-        } else {
-            txt += zenNum[8-tc] + kanNum[tr];
-        }
-        
-        txt += pieceToKif[pCode];
-        
-        if (isPromote) txt += "成";
-        else {
-            const canProm = ['p','l','n','s','b','r'].includes(pCode) && !pCode.includes('+') && (isSente ? tr<=2||fr<=2 : tr>=6||fr>=6);
-            if (canProm && !isDrop) txt += "不成";
-        }
-        
-        if (isDrop) {
-            txt += "打";
-        } else {
-            txt += `(${9-fc}${fr+1})`;
-        }
-        
-        return txt;
+        const isSente = turn === 0; const zenNum = ["１","２","３","４","５","６","７","８","９"]; const kanNum = ["一","二","三","四","五","六","七","八","九"];
+        let txt = (isSente ? "▲" : "△") + (lastPos && lastPos.r === tr && lastPos.c === tc ? "同　" : zenNum[8-tc] + kanNum[tr]) + pieceToKif[pCode];
+        if (isPromote) txt += "成"; else if (['p','l','n','s','b','r'].includes(pCode) && !pCode.includes('+') && !isDrop && (isSente ? tr<=2||fr<=2 : tr>=6||fr>=6)) txt += "不成";
+        return txt + (isDrop ? "打" : `(${9-fc}${fr+1})`);
     }
 
     function executeMove(fr, fc, tr, tc, p, isPromote, isDrop = false, silent = false) {
-        const d = history[currentIndex];
-        const nb = JSON.parse(JSON.stringify(d.board));
-        const sm = [...d.senteMoti], gm = [...d.goteMoti];
-        const isSente = d.turn === 0;
-        
+        const d = history[currentIndex]; const nb = JSON.parse(JSON.stringify(d.board));
+        const sm = [...d.senteMoti], gm = [...d.goteMoti], isSente = d.turn === 0;
         const moveText = getKifuMoveText(fr, fc, tr, tc, p, isPromote, isDrop, d.board, d.turn, d.lastPos);
-        
-        if (isDrop) {
-            nb[tr][tc] = isSente ? p.toLowerCase() : p.toUpperCase();
-            (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p.toLowerCase()), 1);
-        } else {
-            if (nb[tr][tc]) { const cap = nb[tr][tc].replace('+', '').toLowerCase(); (isSente ? sm : gm).push(cap); }
-            nb[tr][tc] = isSente ? (isPromote ? "+" + p : p) : (isPromote ? "+" + p : p).toUpperCase();
-            nb[fr][fc] = '';
-        }
-
-        const kifM = moveText.substring(1);
-
+        if (isDrop) { nb[tr][tc] = isSente ? p : p.toUpperCase(); (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p), 1); }
+        else { if (nb[tr][tc]) (isSente ? sm : gm).push(nb[tr][tc].replace('+', '').toLowerCase()); nb[tr][tc] = isSente ? (isPromote ? "+" + p : p) : (isPromote ? "+" + p : p).toUpperCase(); nb[fr][fc] = ''; }
         history = history.slice(0, currentIndex + 1);
-        history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveText, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
-        currentIndex++; 
-        
-        if (!silent) playMoveSound();
-        
-        render();
+        history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveText, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: moveText.substring(1) });
+        currentIndex++; if (!silent) playMoveSound(); render();
     }
 
     function importKIF(e) {
         const f = e.target.files[0]; if (!f) return;
-        const kName = f.name.replace(/\.kif$/i, '');
         const reader = new FileReader();
         reader.onload = (ev) => {
             try {
                 history = getCleanHistory(); currentIndex = 0;
-                const lines = ev.target.result.split('\n');
-                lines.forEach(line => {
-                    const m = line.match(/^\s*(\d+)\s+([１-９一-九同].+?)(?:\s|\(|$)/);
-                    if (!m) return;
-                    let moveStr = m[2]; let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成') && !moveStr.includes('不成');
+                ev.target.result.split('\n').forEach(line => {
+                    const m = line.match(/^\s*(\d+)\s+([１-９一-九同].+?)(?:\s|\(|$)/); if (!m) return;
+                    let moveStr = m[2], tr, tc, fr, fc, pCode, isProm = moveStr.includes('成') && !moveStr.includes('不成');
                     if (moveStr.startsWith('同')) { tr = history[currentIndex].lastPos.r; tc = history[currentIndex].lastPos.c; }
                     else { tc = 9 - ("１２３４５６７８９".indexOf(moveStr[0]) + 1); tr = "一二三四五六七八九".indexOf(moveStr[1]); }
-                    const pChar = moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0];
-                    pCode = kifPieceMap[pChar].replace('+', '');
-                    if (moveStr.includes('打')) { executeMove(null, null, tr, tc, pCode, false, true, true); }
+                    pCode = kifPieceMap[moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0]].replace('+', '');
+                    if (moveStr.includes('打')) executeMove(null, null, tr, tc, pCode, false, true, true);
                     else {
-                        const fm = line.match(/\((\d)(\d)\)/);
-                        if (fm) { fc = 9 - parseInt(fm[1]); fr = parseInt(fm[2]) - 1; }
+                        const fm = line.match(/\((\d)(\d)\)/); if (fm) { fc = 9 - parseInt(fm[1]); fr = parseInt(fm[2]) - 1; }
                         else {
                             const d = history[currentIndex];
-                            outer: for(let r=0; r<9; r++) for(let c=0; c<9; c++){
-                                let p = d.board[r][c];
-                                if(p && p.toLowerCase().replace('+','') === pCode){
-                                    if((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase())){
-                                        if(isValidMove(r, c, tr, tc, p, d.board)){ fr=r; fc=c; break outer; }
-                                    }
+                            outer: for(let r=0; r<9; r++) for(let c=0; c<9; c++) {
+                                let p = d.board[r][c]; if(p && p.toLowerCase().replace('+','') === pCode && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) {
+                                    if(isValidMove(r, c, tr, tc, p, d.board)) { fr=r; fc=c; break outer; }
                                 }
                             }
                         }
                         executeMove(fr, fc, tr, tc, pCode, isProm, false, true);
                     }
                 });
-                const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-                d[kName] = history;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-                updateList();
-                document.getElementById('kifuList').value = kName;
                 jumpTo(history.length - 1);
-            } catch (err) { alert(i18n[currentLang].msgKifError); }
+            } catch (err) { showToast(i18n[currentLang].msgKifError); }
         };
         reader.readAsText(f); e.target.value = "";
     }
 
     function exportKIF() {
-        const kifuName = document.getElementById('kifuName').value || 'kifu';
-        let kif = `手合割：平手\n手数----指手----\n`;
-        history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'}));
-        a.download = `${kifuName}.kif`; a.click();
+        let kif = `手合割：平手\n手数----指手----\n`; history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'}));
+        a.download = `${document.getElementById('kifuName').value || 'kifu'}.kif`; a.click();
     }
 
     function exportAllJSON() {
-        const d = localStorage.getItem(STORAGE_KEY); if(!d || d === "{}") return alert(i18n[currentLang].msgNoData);
+        const d = localStorage.getItem(STORAGE_KEY); if(!d || d === "{}") return showToast(i18n[currentLang].msgNoData);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([d], {type:'application/json'})); a.download = 'shogi_backup.json'; a.click();
     }
 
     function importAllJSON(e) {
         const f = e.target.files[0]; if(!f) return;
-        const r = new FileReader();
-        r.onload = (ev) => {
-            try {
-                if(confirm(i18n[currentLang].msgRestoreConfirm)) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify({...JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'), ...JSON.parse(ev.target.result)}));
-                    updateList(); alert(i18n[currentLang].msgDone);
-                }
-            } catch { alert("Error"); }
+        const r = new FileReader(); r.onload = (ev) => {
+            try { if(confirm(i18n[currentLang].msgRestoreConfirm)) { localStorage.setItem(STORAGE_KEY, JSON.stringify({...JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'), ...JSON.parse(ev.target.result)})); updateList(); showToast(i18n[currentLang].msgDone); } }
+            catch { showToast("Error"); }
         };
         r.readAsText(f); e.target.value = "";
     }
@@ -767,9 +560,7 @@
     function updateHistoryUI() { 
         const h = document.getElementById('history');
         h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i === 0 ? x.moveText : i + '. ' + x.moveText}</div>`).join('');
-        const activeItem = h.querySelector('.current-move');
-        const isMobile = /iPhone|Android.+Mobile|Windows Phone|webOS|BlackBerry|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
-        if (activeItem && !isMobile) activeItem.scrollIntoView({ block: 'nearest' });
+        const activeItem = h.querySelector('.current-move'); if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
     }
     function jumpTo(i) { currentIndex = i; selected = null; render(); }
     function prevMove() { if(currentIndex > 0) jumpTo(currentIndex-1); }
@@ -778,19 +569,15 @@
     function saveKifu() {
         const n = document.getElementById('kifuName').value; if(!n) return;
         const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[n] = history;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); alert(i18n[currentLang].msgSaved);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); showToast(i18n[currentLang].msgSaved);
     }
 
     function renameKifu() {
-        const select = document.getElementById('kifuList');
-        if (select.selectedOptions.length !== 1) return alert(i18n[currentLang].msgSelectOne);
-        const oldName = select.value;
-        const newName = prompt(i18n[currentLang].msgRenamePrompt, oldName);
+        const select = document.getElementById('kifuList'); if (select.selectedOptions.length !== 1) return showToast(i18n[currentLang].msgSelectOne);
+        const oldName = select.value, newName = prompt(i18n[currentLang].msgRenamePrompt, oldName);
         if (newName && newName !== oldName) {
-            const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-            d[newName] = d[oldName]; delete d[oldName];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-            document.getElementById('kifuName').value = newName; updateList();
+            const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[newName] = d[oldName]; delete d[oldName];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); document.getElementById('kifuName').value = newName; updateList();
         }
     }
 
@@ -800,35 +587,21 @@
     }
 
     function loadKifu() {
-        const select = document.getElementById('kifuList');
-        if (select.selectedOptions.length > 1) return alert(i18n[currentLang].msgSelectOne);
-        const n = select.value;
-        if(n){ 
-            history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = history.length - 1; 
-            document.getElementById('kifuName').value = n; render(); 
-        }
+        const select = document.getElementById('kifuList'); if (select.selectedOptions.length > 1) return showToast(i18n[currentLang].msgSelectOne);
+        const n = select.value; if(n){ history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = history.length - 1; document.getElementById('kifuName').value = n; render(); }
     }
 
     function deleteKifu() {
-        const select = document.getElementById('kifuList');
-        const items = Array.from(select.selectedOptions).map(opt => opt.value);
+        const select = document.getElementById('kifuList'), items = Array.from(select.selectedOptions).map(opt => opt.value);
         if (items.length > 0 && confirm(i18n[currentLang].msgConfirmDel)) {
-            const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            items.forEach(name => delete d[name]);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList();
+            const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); items.forEach(name => delete d[name]); localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList();
         }
     }
 
     window.onload = () => { history = getCleanHistory(); updateUIStrings(); render(); updateList(); };
-
     window.copyKIF = function() {
-        let kif = `手合割：平手\n手数----指手----\n`;
-        history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
-        navigator.clipboard.writeText(kif).then(() => {
-            alert('KIF形式でコピーしました');
-        }, () => {
-            alert('コピーに失敗しました');
-        });
+        let kif = `手合割：平手\n手数----指手----\n`; history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
+        navigator.clipboard.writeText(kif).then(() => showToast(i18n[currentLang].copySuccess), () => showToast(i18n[currentLang].copyFail));
     };
 </script>
 </body>
