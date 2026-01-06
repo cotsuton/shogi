@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      // URLパラメータに ?nosave が含まれているか確認
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('nosave')) {
+          console.log('Google Analytics is disabled via ?nosave parameter.');
+      } else {
+          // 通常アクセスの場合のみGAを実行
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = "https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX";
+          document.head.appendChild(script);
 
-      gtag('config', 'G-WLRD9NY9NX');
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-WLRD9NY9NX');
+      }
     </script>
     
     <meta charset="UTF-8">
