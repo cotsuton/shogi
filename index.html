@@ -1,18 +1,31 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+      // URLに ?nosave が含まれているかチェック
+      const urlParams = new URLSearchParams(window.location.search);
+      const isExcluded = urlParams.has('nosave');
 
-      gtag('config', 'G-WLRD9NY9NX');
+      if (!isExcluded) {
+        // nosaveがない場合のみ計測用スクリプトを読み込む
+        const gtagScript = document.createElement('script');
+        gtagScript.async = true;
+        gtagScript.src = "https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX";
+        document.head.appendChild(gtagScript);
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-WLRD9NY9NX');
+        console.log("Analytics: Active");
+      } else {
+        console.log("Analytics: Disabled (nosave mode)");
+      }
     </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>本格将棋盤 - 解析・一括バックアップ版</title>
+    <title>本格将棋盤 - 除外モード対応</title>
     <style>
         :root {
             --board-bg: #dab982; 
@@ -135,7 +148,7 @@
 </div>
 
 <script>
-    // --- 将棋ロジック (コア変数) ---
+    // --- 将棋ロジック ---
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
     const kanjiMap = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'全','+n':'圭','+l':'杏'};
     const komaOrder = ['r','b','g','s','n','l','p'];
