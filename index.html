@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+
     <script>
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('nosave')) {
@@ -23,10 +24,19 @@
     <title>Professional Shogi Board</title>
     <style>
         :root {
-            --board-bg: #dab982; --cell-border: #4e342e; --sente-color: #1a1a1a; --nari-color: #8b0000; 
-            --highlight-bg: rgba(211, 84, 0, 0.3); --last-move-bg: rgba(255, 255, 0, 0.4);
-            --move-hint: rgba(0, 0, 0, 0.15); --text-main: #3e2723; --ui-bg: #e0d7d2;
-            --sente-accent: #d35400; --btn-bg: #5d4037;
+            --board-bg: #dab982;
+            --cell-border: #4e342e;
+            --sente-color: #1a1a1a;
+            --gote-color: #353535;
+            --nari-sente-color: #d32f2f;
+            --nari-gote-color: #bb1919;
+            --highlight-bg: rgba(211, 84, 0, 0.3);
+            --last-move-bg: rgba(255, 255, 0, 0.4);
+            --move-hint: rgba(0, 0, 0, 0.15);
+            --text-main: #3e2723;
+            --ui-bg: #e0d7d2;
+            --sente-accent: #d35400;
+            --btn-bg: #5d4037;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -68,9 +78,24 @@
             content: ""; width: 16px; height: 16px; background: var(--move-hint); border-radius: 50%; position: absolute; z-index: 1;
         }
 
-        .piece { font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color); position: relative; z-index: 2; }
-        .piece.gote { transform: rotate(180deg); }
-        .piece.nari { color: var(--nari-color); }
+        .piece {
+            font-size: 44px;
+            font-weight: bold;
+            pointer-events: none;
+            color: var(--sente-color);
+            position: relative;
+            z-index: 2;
+        }
+        .piece.gote {
+            color: var(--gote-color);
+            transform: rotate(180deg);
+        }
+        .piece.nari {
+            color: var(--nari-sente-color);
+        }
+        .piece.nari.gote {
+            color: var(--nari-gote-color);
+        }
 
         .side-panel { width: 360px; display: flex; flex-direction: column; gap: 15px; }
         .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -155,6 +180,7 @@
         <div class="card">
             <span class="card-title" data-t="historyTitle">指し手履歴</span>
             <div id="history" class="history-box"></div>
+            <button class="action-btn" style="margin-top:8px;background:#1976d2;" onclick="copyKIF()">KIF形式コピー</button>
         </div>
     </div>
 </div>
@@ -793,6 +819,17 @@
     }
 
     window.onload = () => { history = getCleanHistory(); updateUIStrings(); render(); updateList(); };
+
+// KIF形式コピー機能（windowへ明示的に追加）
+window.copyKIF = function() {
+    let kif = `手合割：平手\n手数----指手----\n`;
+    history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
+    navigator.clipboard.writeText(kif).then(() => {
+        alert('KIF形式でコピーしました');
+    }, () => {
+        alert('コピーに失敗しました');
+    });
+};
 </script>
 </body>
 </html>
