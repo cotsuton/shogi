@@ -25,8 +25,7 @@
         :root {
             --board-bg: #dab982; --cell-border: #4e342e; --sente-color: #1a1a1a; --nari-color: #8b0000; 
             --highlight-bg: rgba(211, 84, 0, 0.3); --last-move-bg: rgba(255, 255, 0, 0.4);
-            --move-dot: rgba(0, 0, 0, 0.2); --text-main: #3e2723; --ui-bg: #e0d7d2;
-            --sente-accent: #d35400; --btn-bg: #5d4037;
+            --text-main: #3e2723; --ui-bg: #e0d7d2; --sente-accent: #d35400; --btn-bg: #5d4037;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -308,6 +307,7 @@
         const nb = JSON.parse(JSON.stringify(d.board));
         const sm = [...d.senteMoti], gm = [...d.goteMoti];
         const isSente = d.turn === 0;
+        
         if (isDrop) {
             nb[tr][tc] = isSente ? p.toLowerCase() : p.toUpperCase();
             (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p.toLowerCase()), 1);
@@ -317,9 +317,20 @@
             nb[tr][tc] = isSente ? finalP : finalP.toUpperCase();
             nb[fr][fc] = '';
         }
+
         const zenkakuNum = ["１","２","３","４","５","６","７","８","９"];
-        const moveTxt = (isSente?"▲":"△") + kanjiMap[p] + (isPromote?"成":"") + (isDrop?"打":"") + `(${9-tc}${tr+1})`;
-        const kifM = `${zenkakuNum[8-tc]}${["一","二","三","四","五","六","七","八","九"][tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
+        const kanjiNum = ["一","二","三","四","五","六","七","八","九"];
+        
+        let moveTxt = (isSente?"▲":"△");
+        if (d.lastPos && d.lastPos.r === tr && d.lastPos.c === tc) {
+            moveTxt += "同";
+        } else {
+            moveTxt += zenkakuNum[8-tc] + kanjiNum[tr];
+        }
+        moveTxt += pieceToKif[p] + (isPromote?"成":"") + (isDrop?"打":"");
+        
+        const kifM = `${zenkakuNum[8-tc]}${kanjiNum[tr]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
+        
         history = history.slice(0, currentIndex + 1);
         history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveTxt, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
         currentIndex++; render();
@@ -401,8 +412,9 @@
 
     function updateHistoryUI() { 
         const h = document.getElementById('history');
-        h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i}. ${x.moveText}</div>`).join('');
-        h.scrollTop = h.scrollHeight;
+        h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i === 0 ? x.moveText : i + '. ' + x.moveText}</div>`).join('');
+        const activeItem = h.querySelector('.current-move');
+        if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
     }
     function jumpTo(i) { currentIndex = i; selected = null; render(); }
     function prevMove() { if(currentIndex > 0) jumpTo(currentIndex-1); }
