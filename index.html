@@ -20,7 +20,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>本格将棋盤 - 連打対策済</title>
+    <title>本格将棋盤 - 着手強調版</title>
     <style>
         :root {
             --board-bg: #dab982; 
@@ -28,32 +28,21 @@
             --sente-color: #1a1a1a; 
             --nari-color: #8b0000; 
             --highlight-bg: rgba(211, 84, 0, 0.3);
+            --last-move-bg: rgba(255, 255, 0, 0.25); /* 最後に動かしたマスの色 */
             --move-dot: rgba(0, 0, 0, 0.2);
             --text-main: #3e2723;
             --ui-bg: #e0d7d2;
             --sente-accent: #d35400;
             --btn-bg: #5d4037;
-            --btn-hover: #795548;
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            /* ダブルタップズームを無効化し、反応を速くする */
-            touch-action: manipulation; 
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         
         body { 
             font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; 
-            background: #1a1a1a; 
-            color: var(--text-main); 
-            display: flex; 
-            justify-content: center; 
-            margin: 0; 
-            padding: 10px; 
-            /* 画面全体の意図しないテキスト選択を防ぐ */
-            user-select: none; 
-            -webkit-user-select: none;
+            background: #1a1a1a; color: var(--text-main); display: flex; 
+            justify-content: center; margin: 0; padding: 10px; 
+            user-select: none; -webkit-user-select: none;
         }
 
         .main-container { display: flex; gap: 20px; width: 100%; max-width: 1400px; }
@@ -80,7 +69,11 @@
         .board-wrapper { position: relative; background: #4e342e; padding: 10px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         #board { display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); background: var(--board-bg); border: 1px solid var(--cell-border); }
         .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; }
+        
+        /* 選択中と着手強調のスタイル */
         .cell.selected { background: var(--highlight-bg); }
+        .cell.last-move { background: var(--last-move-bg); box-shadow: inset 0 0 8px rgba(255,165,0,0.5); }
+        
         .cell.can-move::after { content: ""; width: 14px; height: 14px; background-color: var(--move-dot); border-radius: 50%; position: absolute; }
         .piece { font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color); }
         .piece.gote { transform: rotate(180deg); }
@@ -93,8 +86,7 @@
         .action-btn { 
             width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 6px; 
             color: #fff; background: var(--btn-bg); cursor: pointer; margin-top: 4px; 
-            font-size: 1.1rem; /* スマホで押しやすく少し大きく */
-            -webkit-appearance: none;
+            font-size: 1.1rem; -webkit-appearance: none;
         }
         .action-btn:active { opacity: 0.7; transform: scale(0.95); }
         .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 540px; }
@@ -103,6 +95,7 @@
         .kifu-select { width: 100%; padding: 8px; border-radius: 6px; height: 120px; font-size: 0.9rem; touch-action: auto; }
         .history-box { height: 200px; overflow-y: scroll; background: #efebe9; border: 1px solid #a1887f; border-radius: 6px; touch-action: auto; }
         .history-item { padding: 10px; border-bottom: 1px solid #d7ccc8; font-size: 0.9rem; cursor: pointer; }
+        .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -163,14 +156,14 @@
 </div>
 
 <script>
-    // 将棋ロジックは以前のまま、変更なし
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
     const kanjiMap = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'全','+n':'圭','+l':'杏'};
     const komaOrder = ['r','b','g','s','n','l','p'];
     const STORAGE_KEY = 'SHOGI_LS_DATA_V2';
 
     const initBoard = [['L','N','S','G','K','G','S','N','L'],['','R','','','','','','B',''],['P','P','P','P','P','P','P','P','P'],['','','','','','','','',''],['','','','','','','','',''],['','','','','','','','',''],['p','p','p','p','p','p','p','p','p'],['','b','','','','','','r',''],['l','n','s','g','k','g','s','n','l']];
-    history.push({ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: "開始局面", turn: 0 });
+    // 初期状態には lastMove (着手情報) を null で入れる
+    history.push({ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: "開始局面", turn: 0, lastMove: null });
 
     document.getElementById('kifuList').addEventListener('change', function() {
         if (this.value) document.getElementById('kifuName').value = this.value;
@@ -186,9 +179,20 @@
             for (let c = 0; c < 9; c++) {
                 const cell = document.createElement('div'); cell.className = 'cell';
                 const p = data.board[r][c];
+                
+                // 選択中のハイライト
                 if (selected?.type === 'board' && selected.fr === r && selected.fc === c) cell.classList.add('selected');
+                
+                // 最後に動かした駒のハイライト (移動元と移動先)
+                if (data.lastMove) {
+                    if ((data.lastMove.fr === r && data.lastMove.fc === c) || (data.lastMove.tr === r && data.lastMove.tc === c)) {
+                        cell.classList.add('last-move');
+                    }
+                }
+
                 if (selected?.type === 'board' && isValidMove(selected.fr, selected.fc, r, c, data.board[selected.fr][selected.fc], data.board)) cell.classList.add('can-move');
                 if (selected?.type === 'moti' && p === '' && canExistAt(selected.piece, r, data.turn===0) && !(selected.piece==='p' && isNifu(data.board, c, data.turn===0))) cell.classList.add('can-move');
+                
                 if (p) {
                     const span = document.createElement('span');
                     span.className = 'piece ' + (p===p.toUpperCase()?'gote ':'sente ') + (p.includes('+')?'nari':'');
@@ -209,7 +213,7 @@
         komaOrder.forEach(type => {
             if (counts[type]) {
                 const group = document.createElement('div');
-                group.className = 'moti-group';
+                group.className = 'moti-group' + (selected?.piece===type && selected?.owner===owner ? ' selected' : '');
                 const span = document.createElement('span'); span.className = 'moti-piece' + (owner === 1 ? ' gote' : '');
                 span.innerText = kanjiMap[type]; group.appendChild(span);
                 if (counts[type] > 1) {
@@ -273,20 +277,33 @@
         else executeMove(fr,fc,tr,tc,p,false);
     }
     function processPromotion(n) { document.getElementById('promoteSelector').style.display='none'; executeMove(pendingMove.fr, pendingMove.fc, pendingMove.tr, pendingMove.tc, pendingMove.p, n); }
+    
     function executeMove(fr,fc,tr,tc,p,n) {
         const d = history[currentIndex]; const nb = JSON.parse(JSON.stringify(d.board)); const sm = [...d.senteMoti], gm = [...d.goteMoti];
         if (nb[tr][tc]) { const c = nb[tr][tc].replace('+','').toLowerCase(); if(d.turn===0) sm.push(c); else gm.push(c); }
         let f = n ? "+"+p : p; nb[tr][tc]=f; nb[fr][fc]='';
-        history.push({ board:nb, senteMoti:sm, goteMoti:gm, moveText:(d.turn==0?"▲":"△")+kanjiMap[f.toLowerCase()]+(n?"成":"")+`(${9-fc}${fr+1}→${9-tc}${tr+1})`, turn:1-d.turn });
+        history.push({ 
+            board:nb, senteMoti:sm, goteMoti:gm, 
+            moveText:(d.turn==0?"▲":"△")+kanjiMap[f.toLowerCase()]+(n?"成":"")+`(${9-fc}${fr+1}→${9-tc}${tr+1})`, 
+            turn:1-d.turn,
+            lastMove: {fr, fc, tr, tc} // 移動元・先を記録
+        });
         currentIndex++; render();
     }
+    
     function executeDrop(p, r, c) {
         const d = history[currentIndex]; const nb = JSON.parse(JSON.stringify(d.board)); const sm = [...d.senteMoti], gm = [...d.goteMoti];
         nb[r][c] = (d.turn===0) ? p.toLowerCase() : p.toUpperCase();
         const target = d.turn===0 ? sm : gm; target.splice(target.indexOf(p), 1);
-        history.push({ board:nb, senteMoti:sm, goteMoti:gm, moveText:(d.turn==0?"▲":"△")+kanjiMap[p.toLowerCase()]+`打(${9-c}${r+1})`, turn:1-d.turn });
+        history.push({ 
+            board:nb, senteMoti:sm, goteMoti:gm, 
+            moveText:(d.turn==0?"▲":"△")+kanjiMap[p.toLowerCase()]+`打(${9-c}${r+1})`, 
+            turn:1-d.turn,
+            lastMove: {fr: null, fc: null, tr: r, tc: c} // 打った場合は元位置なし
+        });
         currentIndex++; render();
     }
+
     function updateHistoryUI() { const h = document.getElementById('history'); h.innerHTML = history.map((x,i) => `<div class="history-item ${i==currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i}. ${x.moveText}</div>`).join(''); h.scrollTop = h.scrollHeight; }
     function undoLastMove() { if(history.length>1){ history.pop(); currentIndex = history.length - 1; render(); } }
     function resetBoard() { if(confirm("初期化しますか？")){ history=[history[0]]; currentIndex=0; render(); } }
