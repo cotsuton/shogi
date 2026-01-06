@@ -111,8 +111,6 @@
             <button class="action-btn" onclick="prevMove()">&lt;</button>
             <button class="action-btn" onclick="nextMove()">&gt;</button>
             <button class="action-btn" onclick="jumpTo(history.length - 1)">&gt;|</button>
-            <button class="action-btn" style="grid-column: span 2; background:#455a64;" onclick="undoLastMove()" data-t="undo">1手消す</button>
-            <button class="action-btn" style="grid-column: span 2; background:#8d6e63;" onclick="resetBoard()" data-t="reset">初期化</button>
         </div>
     </div>
 
@@ -156,28 +154,28 @@
 <script>
     const i18n = {
         ja: {
-            promote: "成る", dontPromote: "成らず", undo: "1手消す", reset: "初期化",
+            promote: "成る", dontPromote: "成らず",
             saveTitle: "棋譜の保存", placeholderName: "棋譜名を入力...", btnSave: "アプリ内に保存",
             listTitle: "保存リスト", btnLoad: "読込", btnDelete: "削除",
             backupTitle: "入出力", btnExport: "KIF出力", btnImportKif: "KIF読込", allDL: "まとめてDL", allUL: "まとめてUL",
             historyTitle: "指し手履歴", startPos: "開始局面",
-            msgReset: "初期化しますか？", msgSaved: "保存しました", msgNoData: "データがありません",
+            msgSaved: "保存しました", msgNoData: "データがありません",
             msgRestoreConfirm: "既存データに上書き統合しますか？", msgDone: "完了しました", msgKifError: "KIF解析エラー"
         },
         en: {
-            promote: "Promote", dontPromote: "No Promote", undo: "Undo", reset: "Reset",
+            promote: "Promote", dontPromote: "No Promote",
             saveTitle: "Save Kifu", placeholderName: "Enter name...", btnSave: "Save to App",
             listTitle: "Kifu List", btnLoad: "Load", btnDelete: "Delete",
             backupTitle: "I/O", btnExport: "Export KIF", btnImportKif: "Import KIF", allDL: "Bulk DL", allUL: "Bulk UL",
             historyTitle: "History", startPos: "Start",
-            msgReset: "Reset?", msgSaved: "Saved", msgNoData: "No data",
+            msgSaved: "Saved", msgNoData: "No data",
             msgRestoreConfirm: "Merge with existing data?", msgDone: "Done", msgKifError: "KIF Error"
         }
     };
 
     let currentLang = localStorage.getItem('SHOGI_LANG') || 'ja';
     function updateUIStrings() {
-        document.querySelectorAll('[data-t]').forEach(el => { el.innerText = i18n[currentLang][el.dataset.t]; });
+        document.querySelectorAll('[data-t]').forEach(el => { if(i18n[currentLang][el.dataset.t]) el.innerText = i18n[currentLang][el.dataset.t]; });
         document.querySelectorAll('[data-p]').forEach(el => { el.placeholder = i18n[currentLang][el.dataset.p]; });
         document.getElementById('langSwitcher').innerText = currentLang === 'ja' ? "EN / 日本語" : "日本語 / EN";
     }
@@ -320,7 +318,6 @@
         currentIndex++; render();
     }
 
-    // --- インポート修正：読み込んだら自動保存 ---
     function importKIF(e) {
         const f = e.target.files[0]; if (!f) return;
         const kName = f.name.replace(/\.kif$/i, '');
@@ -355,7 +352,6 @@
                         executeMove(fr, fc, tr, tc, pCode, isProm, false);
                     }
                 });
-                // 自動保存とリスト更新
                 const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
                 d[kName] = history;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
@@ -404,8 +400,7 @@
     function jumpTo(i) { currentIndex = i; selected = null; render(); }
     function prevMove() { if(currentIndex > 0) jumpTo(currentIndex-1); }
     function nextMove() { if(currentIndex < history.length-1) jumpTo(currentIndex+1); }
-    function undoLastMove() { if(history.length>1){ history.pop(); currentIndex = history.length-1; render(); } }
-    function resetBoard() { if(confirm(i18n[currentLang].msgReset)){ history=getCleanHistory(); currentIndex=0; render(); } }
+    
     function saveKifu() {
         const n = document.getElementById('kifuName').value; if(!n) return;
         const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[n] = history;
