@@ -1,50 +1,90 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WLRD9NY9NX');
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Professional Shogi Board - Fixed Import</title>
+    <title>Professional Shogi Board</title>
     <style>
         :root {
             --board-bg: #dab982; --cell-border: #4e342e; --sente-color: #1a1a1a; --nari-color: #8b0000; 
-            --highlight-bg: rgba(211, 84, 0, 0.3); --last-move-bg: rgba(255, 255, 0, 0.3);
+            --highlight-bg: rgba(211, 84, 0, 0.3); --last-move-bg: rgba(255, 255, 0, 0.4);
             --move-dot: rgba(0, 0, 0, 0.2); --text-main: #3e2723; --ui-bg: #e0d7d2;
             --sente-accent: #d35400; --btn-bg: #5d4037;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        body { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; background: #1a1a1a; color: var(--text-main); display: flex; flex-direction: column; align-items: center; margin: 0; padding: 10px; user-select: none; }
+        body { 
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; 
+            background: #1a1a1a; color: var(--text-main); display: flex; flex-direction: column;
+            align-items: center; margin: 0; padding: 10px; user-select: none;
+        }
+
+        .lang-control { width: 100%; max-width: 1400px; display: flex; justify-content: flex-end; margin-bottom: 5px; }
+        .lang-btn { background: #444; color: #fff; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
+
         .main-container { display: flex; gap: 20px; width: 100%; max-width: 1400px; }
+
         @media (max-width: 1000px) {
             .main-container { flex-direction: column; align-items: center; }
             .side-panel { width: 100% !important; max-width: 600px; }
             #board { grid-template-columns: repeat(9, 10.5vw) !important; grid-template-rows: repeat(9, 11.5vw) !important; }
             .piece { font-size: 7.5vw !important; }
-            .komadai { width: 95vw !important; height: 60px !important; }
+            .komadai { width: 95vw !important; height: 65px !important; }
         }
+
         .board-area { display: flex; flex-direction: column; gap: 10px; align-items: center; flex: 1; }
-        .komadai { width: 540px; height: 70px; background: #a1887f; padding: 5px 15px; border-radius: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; border: 2px solid transparent; }
+        .komadai { 
+            width: 540px; height: 75px; background: #a1887f; padding: 5px 15px; border-radius: 8px; 
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border: 2px solid transparent;
+        }
         .komadai.active-sente { border-color: var(--sente-accent); box-shadow: 0 0 10px var(--sente-accent); }
         .komadai.active-gote { border-color: #eee; box-shadow: 0 0 10px #eee; }
+
         .board-wrapper { position: relative; background: #4e342e; padding: 10px; border-radius: 4px; }
         #board { display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); background: var(--board-bg); border: 1px solid var(--cell-border); }
-        .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; }
+        .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
         .cell.selected { background: var(--highlight-bg); }
         .cell.last-move { background: var(--last-move-bg); }
+        
         .piece { font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color); }
         .piece.gote { transform: rotate(180deg); }
         .piece.nari { color: var(--nari-color); }
-        .side-panel { width: 380px; display: flex; flex-direction: column; gap: 15px; }
-        .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; }
+
+        .side-panel { width: 360px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; border-left: 4px solid var(--btn-bg); padding-left: 8px; }
-        .action-btn { width: 100%; padding: 10px; font-weight: bold; border: none; border-radius: 6px; color: #fff; background: var(--btn-bg); cursor: pointer; margin-top: 4px; }
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #a1887f; margin-bottom: 5px; }
-        .kifu-select { width: 100%; padding: 8px; border-radius: 6px; height: 120px; }
-        .history-box { height: 200px; overflow-y: scroll; background: #efebe9; border: 1px solid #a1887f; border-radius: 6px; }
+
+        .action-btn { 
+            width: 100%; padding: 10px; font-weight: bold; border: none; border-radius: 6px; 
+            color: #fff; background: var(--btn-bg); cursor: pointer; margin-top: 4px; font-size: 0.9rem; 
+        }
+        .action-btn:active { opacity: 0.7; transform: scale(0.98); }
+
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #a1887f; margin-bottom: 5px; outline: none; }
+        .kifu-select { width: 100%; padding: 8px; border-radius: 6px; height: 100px; font-size: 0.9rem; margin-bottom: 5px; }
+        .history-box { height: 180px; overflow-y: scroll; background: #efebe9; border: 1px solid #a1887f; border-radius: 6px; }
         .history-item { padding: 8px; border-bottom: 1px solid #d7ccc8; font-size: 0.85rem; cursor: pointer; }
-        .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); }
+        .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); font-weight: bold; }
+        
+        .moti-item { display: flex; align-items: center; cursor: pointer; padding: 2px; border-radius: 4px; position: relative; }
+        .moti-item.selected { background: var(--highlight-bg); }
+        .moti-count { font-size: 12px; font-weight: bold; margin-left: 2px; }
     </style>
 </head>
 <body>
+
+<div class="lang-control">
+    <button class="lang-btn" onclick="toggleLang()" id="langSwitcher">EN / 日本語</button>
+</div>
 
 <div class="main-container">
     <div class="board-area">
@@ -52,70 +92,125 @@
         <div class="board-wrapper">
             <div id="board"></div>
             <div id="promoteSelector" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 12px; display: none; z-index: 100; gap: 40px; border: 3px solid var(--btn-bg);">
-                <div onclick="processPromotion(true)" style="text-align:center; cursor:pointer;"><div class="piece sente nari" id="promoYesPiece"></div><div>成る</div></div>
-                <div onclick="processPromotion(false)" style="text-align:center; cursor:pointer;"><div class="piece sente" id="promoNoPiece"></div><div>成らず</div></div>
+                <div onclick="processPromotion(true)" style="text-align:center; cursor:pointer;"><div class="piece sente nari" id="promoYesPiece"></div><div data-t="promote">成る</div></div>
+                <div onclick="processPromotion(false)" style="text-align:center; cursor:pointer;"><div class="piece sente" id="promoNoPiece"></div><div data-t="dontPromote">成らず</div></div>
             </div>
         </div>
         <div class="komadai sente" id="senteKomadaiContainer"></div>
-        <div class="btn-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 100%; max-width: 540px;">
+        
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 540px;">
             <button class="action-btn" onclick="jumpTo(0)">|&lt;</button>
             <button class="action-btn" onclick="prevMove()">&lt;</button>
             <button class="action-btn" onclick="nextMove()">&gt;</button>
             <button class="action-btn" onclick="jumpTo(history.length - 1)">&gt;|</button>
+            <button class="action-btn" style="grid-column: span 2; background:#455a64;" onclick="undoLastMove()" data-t="undo">1手消す</button>
+            <button class="action-btn" style="grid-column: span 2; background:#8d6e63;" onclick="resetBoard()" data-t="reset">初期化</button>
         </div>
     </div>
 
     <div class="side-panel">
         <div class="card">
-            <span class="card-title">棋譜の保存</span>
-            <input type="text" id="kifuName" placeholder="棋譜名を入力...">
-            <button class="action-btn" style="background:var(--sente-accent);" onclick="saveKifu()">保存</button>
+            <span class="card-title" data-t="saveTitle">棋譜の保存</span>
+            <input type="text" id="kifuName" data-p="placeholderName" placeholder="棋譜名を入力...">
+            <button class="action-btn" style="background:var(--sente-accent);" onclick="saveKifu()" data-t="btnSave">アプリ内に保存</button>
         </div>
+
         <div class="card">
-            <span class="card-title">リスト</span>
+            <span class="card-title" data-t="listTitle">保存リスト</span>
             <select id="kifuList" size="5" class="kifu-select"></select>
-            <button class="action-btn" style="background:#2c3e50;" onclick="loadKifu()">読込</button>
-        </div>
-        <div class="card">
-            <span class="card-title">入出力</span>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                <button class="action-btn" style="background:#27ae60;" onclick="exportKIF()">KIF出力</button>
-                <button class="action-btn" style="background:#2980b9;" onclick="document.getElementById('kifIn').click()">KIF読込</button>
+                <button class="action-btn" style="background:#2c3e50;" onclick="loadKifu()" data-t="btnLoad">読込</button>
+                <button class="action-btn" style="background:#c0392b;" onclick="deleteKifu()" data-t="btnDelete">削除</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <span class="card-title" data-t="backupTitle">入出力</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                <button class="action-btn" style="background:#27ae60;" onclick="exportKIF()" data-t="btnExport">KIF出力</button>
+                <button class="action-btn" style="background:#2980b9;" onclick="document.getElementById('kifIn').click()" data-t="btnImportKif">KIF読込</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
-                <button class="action-btn" style="background:#7f8c8d;" onclick="exportAllJSON()">まとめてDL</button>
-                <button class="action-btn" style="background:#8e44ad;" onclick="document.getElementById('jsonIn').click()">まとめてUL</button>
+                <button class="action-btn" style="background:#7f8c8d;" onclick="exportAllJSON()" data-t="allDL">まとめてDL</button>
+                <button class="action-btn" style="background:#8e44ad;" onclick="document.getElementById('jsonIn').click()" data-t="allUL">まとめてUL</button>
             </div>
             <input type="file" id="kifIn" style="display:none" accept=".kif" onchange="importKIF(event)">
             <input type="file" id="jsonIn" style="display:none" accept=".json" onchange="importAllJSON(event)">
         </div>
+
         <div class="card">
-            <span class="card-title">履歴</span>
+            <span class="card-title" data-t="historyTitle">指し手履歴</span>
             <div id="history" class="history-box"></div>
         </div>
     </div>
 </div>
 
 <script>
+    // --- 多言語設定 ---
+    const i18n = {
+        ja: {
+            promote: "成る", dontPromote: "成らず", undo: "1手消す", reset: "初期化",
+            saveTitle: "棋譜の保存", placeholderName: "棋譜名を入力...", btnSave: "アプリ内に保存",
+            listTitle: "保存リスト", btnLoad: "読込", btnDelete: "削除",
+            backupTitle: "入出力", btnExport: "KIF出力", btnImportKif: "KIF読込", allDL: "まとめてDL", allUL: "まとめてUL",
+            historyTitle: "指し手履歴", startPos: "開始局面",
+            msgReset: "初期化しますか？", msgSaved: "保存しました", msgNoData: "データがありません",
+            msgRestoreConfirm: "既存データに上書き統合しますか？", msgDone: "完了しました", msgKifError: "KIF解析エラー"
+        },
+        en: {
+            promote: "Promote", dontPromote: "No Promote", undo: "Undo", reset: "Reset",
+            saveTitle: "Save Kifu", placeholderName: "Enter name...", btnSave: "Save to App",
+            listTitle: "Kifu List", btnLoad: "Load", btnDelete: "Delete",
+            backupTitle: "I/O", btnExport: "Export KIF", btnImportKif: "Import KIF", allDL: "Bulk DL", allUL: "Bulk UL",
+            historyTitle: "History", startPos: "Start",
+            msgReset: "Reset?", msgSaved: "Saved", msgNoData: "No data",
+            msgRestoreConfirm: "Merge with existing data?", msgDone: "Done", msgKifError: "KIF Error"
+        }
+    };
+
+    let currentLang = localStorage.getItem('SHOGI_LANG') || 'ja';
+    function updateUIStrings() {
+        document.querySelectorAll('[data-t]').forEach(el => { el.innerText = i18n[currentLang][el.dataset.t]; });
+        document.querySelectorAll('[data-p]').forEach(el => { el.placeholder = i18n[currentLang][el.dataset.p]; });
+        document.getElementById('langSwitcher').innerText = currentLang === 'ja' ? "EN / 日本語" : "日本語 / EN";
+    }
+    function toggleLang() { currentLang = currentLang === 'ja' ? 'en' : 'ja'; localStorage.setItem('SHOGI_LANG', currentLang); updateUIStrings(); render(); }
+
+    // --- データと定数 ---
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
     const kanjiMap = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'全','+n':'圭','+l':'杏'};
     const kifPieceMap = {'歩':'p','飛':'r','角':'b','金':'g','銀':'s','桂':'n','香':'l','玉':'k','王':'k','と':'+p','竜':'+r','龍':'+r','馬':'+b','成銀':'+s','成桂':'+n','成香':'+l','全':'+s','圭':'+n','杏':'+l'};
-    const STORAGE_KEY = 'SHOGI_LS_DATA_V3';
+    const pieceToKif = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'成銀','+n':'成桂','+l':'成香'};
+    const STORAGE_KEY = 'SHOGI_APP_DATA_V5';
 
-    const initBoard = [['L','N','S','G','K','G','S','N','L'],['','R','','','','','','B',''],['P','P','P','P','P','P','P','P','P'],['','','','','','','','',''],['','','','','','','','',''],['','','','','','','','',''],['p','p','p','p','p','p','p','p','p'],['','b','','','','','','r',''],['l','n','s','g','k','g','s','n','l']];
-    function getCleanHistory() { return [{ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: "開始局面", turn: 0, lastPos: null, kifMove: "" }]; }
-    history = getCleanHistory();
+    const initBoard = [
+        ['L','N','S','G','K','G','S','N','L'],
+        ['','R','','','','','','B',''],
+        ['P','P','P','P','P','P','P','P','P'],
+        ['','','','','','','','',''],['','','','','','','','',''],['','','','','','','','',''],
+        ['p','p','p','p','p','p','p','p','p'],
+        ['','b','','','','','','r',''],
+        ['l','n','s','g','k','g','s','n','l']
+    ];
 
+    function getCleanHistory() { 
+        return [{ board: JSON.parse(JSON.stringify(initBoard)), senteMoti: [], goteMoti: [], moveText: i18n[currentLang].startPos, turn: 0, lastPos: null, kifMove: "" }]; 
+    }
+
+    // --- メインロジック ---
     function render() {
         const data = history[currentIndex];
         const boardEl = document.getElementById('board'); boardEl.innerHTML = '';
+        
         document.getElementById('senteKomadaiContainer').className = "komadai sente" + (data.turn===0 ? " active-sente" : "");
         document.getElementById('goteKomadaiContainer').className = "komadai gote" + (data.turn===1 ? " active-gote" : "");
 
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 const cell = document.createElement('div'); cell.className = 'cell';
+                if (selected?.type === 'board' && selected.r === r && selected.c === c) cell.classList.add('selected');
                 if (data.lastPos && data.lastPos.r === r && data.lastPos.c === c) cell.classList.add('last-move');
+                
                 const p = data.board[r][c];
                 if (p) {
                     const span = document.createElement('span');
@@ -135,45 +230,100 @@
         const counts = {}; (pieces||[]).forEach(p => counts[p] = (counts[p] || 0) + 1);
         ['r','b','g','s','n','l','p'].forEach(type => {
             if (counts[type]) {
-                const group = document.createElement('div');
+                const item = document.createElement('div');
+                item.className = 'moti-item' + (selected?.type === 'moti' && selected.piece === type && selected.owner === owner ? ' selected' : '');
                 const span = document.createElement('span'); span.className = 'piece' + (owner===1?' gote':'');
-                span.innerText = kanjiMap[type]; span.style.fontSize="30px"; group.appendChild(span);
-                if(counts[type]>1){ const b=document.createElement('span'); b.innerText=counts[type]; b.style.fontSize="12px"; group.appendChild(b); }
-                el.appendChild(group);
+                span.innerText = kanjiMap[type]; span.style.fontSize="30px"; item.appendChild(span);
+                if(counts[type]>1){ const b=document.createElement('span'); b.className='moti-count'; b.innerText=counts[type]; item.appendChild(b); }
+                item.onclick = (e) => { e.stopPropagation(); if(history[currentIndex].turn === owner) { selected = {type:'moti', piece:type, owner:owner}; render(); } };
+                el.appendChild(item);
             }
         });
     }
+
+    function handleCellClick(r, c) {
+        const d = history[currentIndex];
+        if (selected) {
+            if (selected.type === 'board') {
+                if (isValidMove(selected.r, selected.c, r, c, d.board[selected.r][selected.c], d.board)) {
+                    checkPromotion(selected.r, selected.c, r, c, d.board[selected.r][selected.c]);
+                    selected = null;
+                } else {
+                    const p = d.board[r][c];
+                    if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c};
+                    else selected = null;
+                }
+            } else if (selected.type === 'moti') {
+                if (d.board[r][c] === '' && canExistAt(selected.piece, r, d.turn===0)) {
+                    executeMove(null, null, r, c, selected.piece, false, true);
+                    selected = null;
+                } else { selected = null; }
+            }
+        } else {
+            const p = d.board[r][c];
+            if (p && ((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase()))) selected = {type:'board', r:r, c:c};
+        }
+        render();
+    }
+
+    function canExistAt(t, row, isS) { if (isS) { if (t==='p'||t==='l') return row>0; if (t==='n') return row>1; } else { if (t==='p'||t==='l') return row<8; if (t==='n') return row<7; } return true; }
+
+    function isValidMove(fr, fc, tr, tc, p, b) {
+        const isS = p === p.toLowerCase(); const dr = tr-fr, dc = tc-fc, adr = Math.abs(dr), adc = Math.abs(dc);
+        if (b[tr][tc] !== '' && (b[tr][tc] === b[tr][tc].toLowerCase()) === isS) return false;
+        const t = p.toLowerCase();
+        const checkPath = () => { const sr=dr===0?0:dr/adr, sc=dc===0?0:dc/adc; let cr=fr+sr, cc=fc+sc; while(cr!==tr||cc!==tc){if(b[cr][cc]!=='')return false; cr+=sr; cc+=sc;} return true; };
+        switch (t) {
+            case 'p': return dc===0 && (isS ? dr===-1 : dr===1);
+            case 'l': return dc===0 && (isS ? dr<0 : dr>0) && checkPath();
+            case 'n': return adc===1 && (isS ? dr===-2 : dr===2);
+            case 's': return (adr===1 && adc===1) || (adc===0 && (isS ? dr===-1 : dr===1));
+            case 'g': case '+p': case '+l': case '+n': case '+s': return (adr<=1 && adc<=1) && !(isS ? (dr===1 && adc===1) : (dr===-1 && adc===1));
+            case 'k': return adr<=1 && adc<=1;
+            case 'r': return (dr===0 || dc===0) && checkPath();
+            case '+r': return (dr===0 || dc===0 && checkPath()) || (adr===1 && adc===1);
+            case 'b': return adr===adc && checkPath();
+            case '+b': return (adr===adc && checkPath()) || (adr<=1 && adc<=1);
+        } return false;
+    }
+
+    function checkPromotion(fr,fc,tr,tc,p) {
+        const isS = p===p.toLowerCase(); const t = p.toLowerCase();
+        const can = ['p','l','n','s','b','r'].includes(t) && !p.includes('+') && (isS ? tr<=2||fr<=2 : tr>=6||fr>=6);
+        if (!canExistAt(t, tr, isS)) executeMove(fr,fc,tr,tc,t,true);
+        else if (can) { pendingMove = {fr,fc,tr,tc,p:t}; document.getElementById('promoYesPiece').innerText = kanjiMap['+'+t]; document.getElementById('promoNoPiece').innerText = kanjiMap[t]; document.getElementById('promoteSelector').style.display='flex'; }
+        else executeMove(fr,fc,tr,tc,t,false);
+    }
+    function processPromotion(n) { document.getElementById('promoteSelector').style.display='none'; executeMove(pendingMove.fr, pendingMove.fc, pendingMove.tr, pendingMove.tc, pendingMove.p, n); }
 
     function executeMove(fr, fc, tr, tc, p, isPromote, isDrop = false) {
         const d = history[currentIndex];
         const nb = JSON.parse(JSON.stringify(d.board));
-        const sm = [...d.senteMoti]; const gm = [...d.goteMoti];
+        const sm = [...d.senteMoti], gm = [...d.goteMoti];
         const isSente = d.turn === 0;
 
         if (isDrop) {
             nb[tr][tc] = isSente ? p.toLowerCase() : p.toUpperCase();
-            const targetMoti = isSente ? sm : gm;
-            targetMoti.splice(targetMoti.indexOf(p.toLowerCase()), 1);
+            (isSente ? sm : gm).splice((isSente ? sm : gm).indexOf(p.toLowerCase()), 1);
         } else {
-            const captured = nb[tr][tc];
-            if (captured) {
-                const c = captured.replace('+', '').toLowerCase();
-                (isSente ? sm : gm).push(c);
+            if (nb[tr][tc]) {
+                const cap = nb[tr][tc].replace('+', '').toLowerCase();
+                (isSente ? sm : gm).push(cap);
             }
-            let finalPiece = isPromote ? "+" + p.toLowerCase() : p.toLowerCase();
-            nb[tr][tc] = isSente ? finalPiece : finalPiece.toUpperCase();
+            const finalP = isPromote ? "+" + p : p;
+            nb[tr][tc] = isSente ? finalP : finalP.toUpperCase();
             nb[fr][fc] = '';
         }
 
-        const kifM = `${String.fromCharCode(9-tc+0xFEE0)}${["","一","二","三","四","五","六","七","八","九"][tr+1]}${kanjiMap[p.toLowerCase()]}${isPromote?'成':''}${isDrop?'打':''}(${9-fc}${fr+1})`;
-        history.push({
-            board: nb, senteMoti: sm, goteMoti: gm,
-            moveText: (isSente ? "▲" : "△") + kanjiMap[p.toLowerCase()] + (isPromote ? "成" : "") + (isDrop ? "打" : "") + `(${9-tc}${tr+1})`,
-            turn: 1 - d.turn, lastPos: { r: tr, c: tc }, kifMove: kifM
-        });
-        currentIndex++;
+        const moveTxt = (isSente?"▲":"△") + kanjiMap[p] + (isPromote?"成":"") + (isDrop?"打":"") + `(${9-tc}${tr+1})`;
+        const kifM = `${String.fromCharCode(9-tc+0xFEE0)}${["","一","二","三","四","五","六","七","八","九"][tr+1]}${pieceToKif[p]}${isPromote?'成':''}${isDrop?'打':''}${isDrop?'':`(${9-fc}${fr+1})`}`;
+
+        history = history.slice(0, currentIndex + 1);
+        history.push({ board: nb, senteMoti: sm, goteMoti: gm, moveText: moveTxt, turn: 1-d.turn, lastPos: {r:tr, c:tc}, kifMove: kifM });
+        currentIndex++; render();
     }
 
+    // --- インポート / エクスポート ---
     function importKIF(e) {
         const f = e.target.files[0]; if (!f) return;
         const reader = new FileReader();
@@ -185,7 +335,7 @@
                     const m = line.match(/^\s*(\d+)\s+([１-９一-九同].+?)(?:\s|\(|$)/);
                     if (!m) return;
                     let moveStr = m[2];
-                    let tr, tc, fr, fc, pieceChar, isProm = moveStr.includes('成');
+                    let tr, tc, fr, fc, pCode, isProm = moveStr.includes('成');
                     
                     if (moveStr.startsWith('同')) {
                         tr = history[currentIndex].lastPos.r; tc = history[currentIndex].lastPos.c;
@@ -194,8 +344,8 @@
                         tr = "一二三四五六七八九".indexOf(moveStr[1]);
                     }
 
-                    pieceChar = moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0];
-                    const pCode = kifPieceMap[pieceChar].replace('+', '');
+                    const pChar = moveStr.match(/[歩飛角金銀桂香玉王と竜龍馬全圭杏]/)[0];
+                    pCode = kifPieceMap[pChar].replace('+', '');
 
                     if (moveStr.includes('打')) {
                         executeMove(null, null, tr, tc, pCode, false, true);
@@ -204,43 +354,82 @@
                         if (fm) {
                             fc = 9 - parseInt(fm[1]); fr = parseInt(fm[2]) - 1;
                         } else {
-                            // 移動元がない場合の検索
                             const d = history[currentIndex];
-                            findSource: for(let r=0; r<9; r++) for(let c=0; c<9; c++){
+                            outer: for(let r=0; r<9; r++) for(let c=0; c<9; c++){
                                 let p = d.board[r][c];
                                 if(p && p.toLowerCase().replace('+','') === pCode){
-                                    const isS = p === p.toLowerCase();
-                                    if((isS && d.turn===0) || (!isS && d.turn===1)) { fr=r; fc=c; break findSource; }
+                                    if((d.turn===0 && p===p.toLowerCase()) || (d.turn===1 && p===p.toUpperCase())){
+                                        if(isValidMove(r, c, tr, tc, p, d.board)){ fr=r; fc=c; break outer; }
+                                    }
                                 }
                             }
                         }
                         executeMove(fr, fc, tr, tc, pCode, isProm, false);
                     }
                 });
-                render(); alert("読込完了");
-            } catch (err) { alert("解析失敗"); console.log(err); }
+                render();
+            } catch (err) { alert(i18n[currentLang].msgKifError); }
         };
-        reader.readAsText(f, "utf-8"); e.target.value = "";
+        reader.readAsText(f); e.target.value = "";
     }
 
+    function exportKIF() {
+        let kif = `手合割：平手\n手数----指手----\n`;
+        history.forEach((h, i) => { if(i>0) kif += `${i.toString().padStart(4)} ${h.kifMove}\n`; });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'})); a.download = 'kifu.kif'; a.click();
+    }
+
+    function exportAllJSON() {
+        const d = localStorage.getItem(STORAGE_KEY);
+        if(!d || d === "{}") return alert(i18n[currentLang].msgNoData);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([d], {type:'application/json'})); a.download = 'shogi_backup.json'; a.click();
+    }
+
+    function importAllJSON(e) {
+        const f = e.target.files[0]; if(!f) return;
+        const r = new FileReader();
+        r.onload = (ev) => {
+            try {
+                if(confirm(i18n[currentLang].msgRestoreConfirm)) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({...JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'), ...JSON.parse(ev.target.result)}));
+                    updateList(); alert(i18n[currentLang].msgDone);
+                }
+            } catch { alert("Error"); }
+        };
+        r.readAsText(f); e.target.value = "";
+    }
+
+    // --- UI Helpers ---
     function updateHistoryUI() { 
         const h = document.getElementById('history');
         h.innerHTML = history.map((x,i) => `<div class="history-item ${i===currentIndex?'current-move':''}" onclick="jumpTo(${i})">${i}. ${x.moveText}</div>`).join('');
         h.scrollTop = h.scrollHeight;
     }
-    function jumpTo(i) { currentIndex = i; render(); }
+    function jumpTo(i) { currentIndex = i; selected = null; render(); }
     function prevMove() { if(currentIndex > 0) jumpTo(currentIndex-1); }
     function nextMove() { if(currentIndex < history.length-1) jumpTo(currentIndex+1); }
-    function saveKifu() { const n = document.getElementById('kifuName').value; if(!n) return; const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[n] = history; localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); }
-    function updateList() { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); document.getElementById('kifuList').innerHTML = Object.keys(d).map(k => `<option value="${k}">${k}</option>`).join(''); }
-    function loadKifu() { const n = document.getElementById('kifuList').value; if(n){ history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = 0; render(); } }
-    function exportAllJSON() { const d = localStorage.getItem(STORAGE_KEY); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([d], {type:'application/json'})); a.download = 'shogi_backup.json'; a.click(); }
-    function exportKIF() {
-        let kif = `手合割：平手\n手数----指手----\n`;
-        history.forEach((h, i) => { if(i>0) kif += `${i} ${h.kifMove}\n`; });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([kif], {type:'text/plain'})); a.download = 'kifu.kif'; a.click();
+    function undoLastMove() { if(history.length>1){ history.pop(); currentIndex = history.length-1; render(); } }
+    function resetBoard() { if(confirm(i18n[currentLang].msgReset)){ history=getCleanHistory(); currentIndex=0; render(); } }
+    
+    function saveKifu() {
+        const n = document.getElementById('kifuName').value; if(!n) return;
+        const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); d[n] = history;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); alert(i18n[currentLang].msgSaved);
     }
-    window.onload = () => { render(); updateList(); };
+    function updateList() {
+        const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+        document.getElementById('kifuList').innerHTML = Object.keys(d).sort().map(k => `<option value="${k}">${k}</option>`).join('');
+    }
+    function loadKifu() {
+        const n = document.getElementById('kifuList').value;
+        if(n){ history = JSON.parse(localStorage.getItem(STORAGE_KEY))[n]; currentIndex = 0; render(); }
+    }
+    function deleteKifu() {
+        const n = document.getElementById('kifuList').value;
+        if(n && confirm("Delete?")){ const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); delete d[n]; localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); updateList(); }
+    }
+
+    window.onload = () => { history = getCleanHistory(); updateUIStrings(); render(); updateList(); };
 </script>
 </body>
 </html>
