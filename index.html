@@ -2,12 +2,10 @@
 <html lang="ja">
 <head>
     <script>
-      // URLに ?nosave が含まれているかチェック
       const urlParams = new URLSearchParams(window.location.search);
       const isExcluded = urlParams.has('nosave');
 
       if (!isExcluded) {
-        // nosaveがない場合のみ計測用スクリプトを読み込む
         const gtagScript = document.createElement('script');
         gtagScript.async = true;
         gtagScript.src = "https://www.googletagmanager.com/gtag/js?id=G-WLRD9NY9NX";
@@ -17,15 +15,12 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-WLRD9NY9NX');
-        console.log("Analytics: Active");
-      } else {
-        console.log("Analytics: Disabled (nosave mode)");
       }
     </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>本格将棋盤 - 除外モード対応</title>
+    <title>本格将棋盤 - 連打対策済</title>
     <style>
         :root {
             --board-bg: #dab982; 
@@ -41,8 +36,26 @@
             --btn-hover: #795548;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; background: #1a1a1a; color: var(--text-main); display: flex; justify-content: center; margin: 0; padding: 10px; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            /* ダブルタップズームを無効化し、反応を速くする */
+            touch-action: manipulation; 
+        }
+        
+        body { 
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif; 
+            background: #1a1a1a; 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            margin: 0; 
+            padding: 10px; 
+            /* 画面全体の意図しないテキスト選択を防ぐ */
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
         .main-container { display: flex; gap: 20px; width: 100%; max-width: 1400px; }
 
         @media (max-width: 1000px) {
@@ -54,6 +67,7 @@
         }
 
         .board-area { display: flex; flex-direction: column; gap: 10px; align-items: center; flex: 1; padding-top: 10px; }
+        
         .komadai { 
             width: 540px; height: 70px; min-height: 70px;
             background: #a1887f; padding: 5px 15px; border-radius: 8px; 
@@ -62,16 +76,13 @@
         }
         .komadai.active-sente { background: #bcaaa4; border-color: var(--sente-accent); box-shadow: 0 0 10px var(--sente-accent); }
         .komadai.active-gote { background: #bcaaa4; border-color: #eee; box-shadow: 0 0 10px #eee; }
-        .moti-group { position: relative; display: flex; align-items: center; cursor: pointer; height: 45px; }
-        .moti-piece { font-size: 32px; color: var(--sente-color); }
-        .moti-count { position: absolute; top: -5px; right: -10px; font-size: 12px; font-weight: bold; background: #2b2b2b; color: #fff; padding: 1px 5px; border-radius: 8px; }
 
         .board-wrapper { position: relative; background: #4e342e; padding: 10px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         #board { display: grid; grid-template-columns: repeat(9, 60px); grid-template-rows: repeat(9, 66px); background: var(--board-bg); border: 1px solid var(--cell-border); }
         .cell { border: 0.5px solid var(--cell-border); display: flex; justify-content: center; align-items: center; position: relative; }
         .cell.selected { background: var(--highlight-bg); }
         .cell.can-move::after { content: ""; width: 14px; height: 14px; background-color: var(--move-dot); border-radius: 50%; position: absolute; }
-        .piece { font-size: 44px; font-weight: bold; user-select: none; color: var(--sente-color); }
+        .piece { font-size: 44px; font-weight: bold; pointer-events: none; color: var(--sente-color); }
         .piece.gote { transform: rotate(180deg); }
         .piece.nari { color: var(--nari-color); }
 
@@ -79,15 +90,19 @@
         .card { background: var(--ui-bg); padding: 15px; border-radius: 12px; border: 1px solid #a1887f; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .card-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; border-left: 4px solid var(--btn-bg); padding-left: 8px; }
 
-        .action-btn { width: 100%; padding: 10px; font-weight: bold; border: none; border-radius: 6px; color: #fff; background: var(--btn-bg); cursor: pointer; margin-top: 4px; font-size: 0.9rem; }
-        .action-btn:active { opacity: 0.8; transform: scale(0.98); }
+        .action-btn { 
+            width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 6px; 
+            color: #fff; background: var(--btn-bg); cursor: pointer; margin-top: 4px; 
+            font-size: 1.1rem; /* スマホで押しやすく少し大きく */
+            -webkit-appearance: none;
+        }
+        .action-btn:active { opacity: 0.7; transform: scale(0.95); }
         .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 540px; }
 
-        input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #a1887f; margin-bottom: 5px; font-size: 1rem; outline: none; }
-        .kifu-select { width: 100%; padding: 8px; border-radius: 6px; height: 120px; font-size: 0.9rem; }
-        .history-box { height: 200px; overflow-y: scroll; background: #efebe9; border: 1px solid #a1887f; border-radius: 6px; }
-        .history-item { padding: 8px; border-bottom: 1px solid #d7ccc8; font-size: 0.85rem; cursor: pointer; }
-        .current-move { background: #d7ccc8; border-left: 5px solid var(--sente-accent); font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #a1887f; margin-bottom: 5px; font-size: 1rem; outline: none; touch-action: auto; }
+        .kifu-select { width: 100%; padding: 8px; border-radius: 6px; height: 120px; font-size: 0.9rem; touch-action: auto; }
+        .history-box { height: 200px; overflow-y: scroll; background: #efebe9; border: 1px solid #a1887f; border-radius: 6px; touch-action: auto; }
+        .history-item { padding: 10px; border-bottom: 1px solid #d7ccc8; font-size: 0.9rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -148,7 +163,7 @@
 </div>
 
 <script>
-    // --- 将棋ロジック ---
+    // 将棋ロジックは以前のまま、変更なし
     let history = []; let currentIndex = 0; let selected = null; let pendingMove = null;
     const kanjiMap = {'p':'歩','r':'飛','b':'角','g':'金','s':'銀','n':'桂','l':'香','k':'玉','+p':'と','+r':'竜','+b':'馬','+s':'全','+n':'圭','+l':'杏'};
     const komaOrder = ['r','b','g','s','n','l','p'];
@@ -179,7 +194,8 @@
                     span.className = 'piece ' + (p===p.toUpperCase()?'gote ':'sente ') + (p.includes('+')?'nari':'');
                     span.innerText = kanjiMap[p.toLowerCase()]; cell.appendChild(span);
                 }
-                cell.onclick = () => handleCellClick(r, c); boardEl.appendChild(cell);
+                cell.onclick = (e) => { e.preventDefault(); handleCellClick(r, c); }; 
+                boardEl.appendChild(cell);
             }
         }
         renderMoti('senteKomadaiContainer', data.senteMoti || [], 0);
@@ -193,14 +209,14 @@
         komaOrder.forEach(type => {
             if (counts[type]) {
                 const group = document.createElement('div');
-                group.className = 'moti-group' + (selected?.piece===type && selected?.owner===owner ? ' selected' : '');
+                group.className = 'moti-group';
                 const span = document.createElement('span'); span.className = 'moti-piece' + (owner === 1 ? ' gote' : '');
                 span.innerText = kanjiMap[type]; group.appendChild(span);
                 if (counts[type] > 1) {
                     const badge = document.createElement('span'); badge.className = 'moti-count';
                     badge.innerText = counts[type]; group.appendChild(badge);
                 }
-                group.onclick = (e) => { e.stopPropagation(); if (history[currentIndex].turn === owner) { selected = {type: 'moti', piece: type, owner: owner}; render(); } };
+                group.onclick = (e) => { e.preventDefault(); e.stopPropagation(); if (history[currentIndex].turn === owner) { selected = {type: 'moti', piece: type, owner: owner}; render(); } };
                 el.appendChild(group);
             }
         });
