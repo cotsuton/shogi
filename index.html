@@ -336,8 +336,15 @@
                     if (selected.type === 'board') {
                         const p = data.board[selected.r][selected.c];
                         if (isValidMove(selected.r, selected.c, r, c, p, data.board)) {
-                            // 王手時は王手を防ぐ手のみ
-                            if (isCheck) {
+                            // 王の移動は王手放置禁止（王手でなくても）
+                            if (p.toLowerCase() === 'k') {
+                                const tempBoard = JSON.parse(JSON.stringify(data.board));
+                                tempBoard[r][c] = tempBoard[selected.r][selected.c];
+                                tempBoard[selected.r][selected.c] = '';
+                                if (!isKingInCheck(tempBoard, data.turn)) {
+                                    cell.classList.add('can-move');
+                                }
+                            } else if (isCheck) {
                                 // 飛車・竜による遮断駒のみハイライト
                                 if (blockPos) {
                                     if (selected.r === blockPos.r && selected.c === blockPos.c) {
